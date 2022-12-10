@@ -3,7 +3,7 @@ package com.example.bookshelf.recyclerview;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -43,13 +43,13 @@ public class BookAdapter extends
     }
 
     static class CustomViewHolder extends RecyclerView.ViewHolder {
-        private final ImageView cover;
+        private final LinearLayout layout;
         private final TextView name;
         private final TextView author;
 
         public CustomViewHolder(View itemView) {
             super(itemView);
-            cover = itemView.findViewById(R.id.bookCover);
+            layout = itemView.findViewById(R.id.bookLayout);
             name = itemView.findViewById(R.id.bookName);
             author = itemView.findViewById(R.id.bookAuthor);
         }
