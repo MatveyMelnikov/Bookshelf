@@ -31,11 +31,18 @@ public class BookList extends Fragment implements RecyclerListener {
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 2));
 
+        view.findViewById(R.id.floatingActionButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ((MainActivity) requireActivity()).startAddBookFragment();
+            }
+        });
+
         return view;
     }
 
     private void setInitialData() {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 1; i <= 10; i++) {
             states.add(
                     new Book("Name" + i, "Author" + i, "path" + i)
             );
