@@ -1,5 +1,8 @@
 package com.example.bookshelf.recyclerview;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,18 +13,26 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bookshelf.Book;
+import com.example.bookshelf.DataController;
 import com.example.bookshelf.R;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 public class BookAdapter extends
         RecyclerView.Adapter<BookAdapter.CustomViewHolder> {
     private final ArrayList<Book> books;
     private final RecyclerListener recyclerListener;
+    private final WeakReference<Context> context;
 
-    public BookAdapter(RecyclerListener recyclerListener, ArrayList<Book> colors) {
+    public BookAdapter(
+            WeakReference<Context> context, 
+            RecyclerListener recyclerListener, 
+            ArrayList<Book> books
+    ) {
+        this.context = context;
         this.recyclerListener = recyclerListener;
-        this.books = colors;
+        this.books = books;
     }
 
     @NonNull
@@ -34,7 +45,12 @@ public class BookAdapter extends
     @Override
     public void onBindViewHolder(@NonNull CustomViewHolder holder, int position) {
         Book currentBook = books.get(position);
-        holder.setContent(currentBook.name, currentBook.author);
+        holder.setContent(
+                context.get(),
+                currentBook.name,
+                currentBook.author,
+                DataController.loadBookCard(currentBook.name + currentBook.author)
+        );
     }
 
     @Override
@@ -54,10 +70,12 @@ public class BookAdapter extends
             author = itemView.findViewById(R.id.bookAuthor);
         }
 
-        public void setContent(String name, String author)
+        public void setContent(Context context, String name, String author, Bitmap bitmap)
         {
             this.name.setText(name);
             this.author.setText(author);
+            if (bitmap != null)
+                layout.setBackground(new BitmapDrawable(context.getResources(), bitmap));
         }
     }
 }

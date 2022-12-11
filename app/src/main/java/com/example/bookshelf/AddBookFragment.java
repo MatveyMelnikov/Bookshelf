@@ -10,6 +10,12 @@ import androidx.fragment.app.Fragment;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.LightingColorFilter;
+import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -20,11 +26,15 @@ import android.renderscript.ScriptIntrinsicBlur;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class AddBookFragment extends Fragment {
     private ActivityResultLauncher<Intent> activityResultLauncher;
+    private Bitmap currentBookCard;
 
     @Override
     public View onCreateView(
@@ -49,10 +59,11 @@ public class AddBookFragment extends Fragment {
                         Intent data = result.getData();
 
                         if (data != null) {
+                            currentBookCard = getBookCard(data);
                             fragmentView.findViewById(R.id.bookCard).setBackground(
                                     new BitmapDrawable(
                                             requireContext().getResources(),
-                                            getBookCard(data)
+                                            currentBookCard
                                     )
                             );
                         }
@@ -64,11 +75,19 @@ public class AddBookFragment extends Fragment {
                 selectSource()
         );
 
-        /*
-        fragmentView.findViewById(R.id.confirmButton).setOnClickListener(view ->
-                startPickingImageFromGallery()
-        );
-         */
+        fragmentView.findViewById(R.id.confirmButton).setOnClickListener(view -> {
+            EditText editBookName = (EditText) (fragmentView.findViewById(R.id.editBookName));
+            EditText editAuthor = (EditText) (fragmentView.findViewById(R.id.editAuthor));
+
+            String bookName = editBookName.getText().toString();
+            String author = editAuthor.getText().toString();
+            if (bookName.isEmpty() || author.isEmpty())
+                return;
+
+            if (currentBookCard != null)
+                DataController.putBitmap(bookName + author, currentBookCard);
+            DataController.putBook(new Book(bookName, author));
+        });
 
         return fragmentView;
     }
@@ -144,6 +163,30 @@ public class AddBookFragment extends Fragment {
         return result;
     }
 
+    Bitmap getDarkenBitmap(Bitmap bitmap) {
+        int BRIGHTNESS_PERCENTAGE = 50;
+        int multiply = (int) ((BRIGHTNESS_PERCENTAGE / 100.0f) * 255);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        // Just dividing each color component
+        ColorFilter filter = new LightingColorFilter(
+                Color.argb(255, multiply, multiply, multiply),
+                0x00000000
+        );
+        paint.setColorFilter(filter);
+        canvas.drawBitmap(bitmap, 0, 0, paint);
+
+        return bitmap;
+    }
+
+    Bitmap compressBitmap(Bitmap bitmap) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 60, outputStream);
+        return BitmapFactory.decodeStream(
+                new ByteArrayInputStream(outputStream.toByteArray())
+        );
+    }
+
     Bitmap getBookCard(Intent data) {
         Bitmap bitmap = null;
         try {
@@ -159,7 +202,9 @@ public class AddBookFragment extends Fragment {
             }
 
             bitmap = cropImage(bitmap);
+            bitmap = compressBitmap(bitmap);
             bitmap = blurBitmap(bitmap);
+            bitmap = getDarkenBitmap(bitmap);
         } catch (IOException e) {
             e.printStackTrace();
         }
