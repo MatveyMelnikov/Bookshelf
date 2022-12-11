@@ -18,6 +18,7 @@ import com.example.bookshelf.R;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class BookAdapter extends
         RecyclerView.Adapter<BookAdapter.CustomViewHolder> {
@@ -33,6 +34,21 @@ public class BookAdapter extends
         this.context = context;
         this.recyclerListener = recyclerListener;
         this.books = books;
+    }
+
+    public void deleteItem(int index) {
+        books.remove(index);
+        notifyItemRemoved(index);
+    }
+
+    public String getItemKey(int index) {
+        Book book = books.get(index);
+        return book.name + book.author;
+    }
+
+    public void swapItem(int oldIndex, int newIndex) {
+        Collections.swap(books, oldIndex, newIndex);
+        notifyItemMoved(oldIndex, newIndex);
     }
 
     @NonNull
@@ -51,6 +67,16 @@ public class BookAdapter extends
                 currentBook.author,
                 DataController.loadBookCard(currentBook.name + currentBook.author)
         );
+
+        holder.layout.setOnClickListener(view ->
+                recyclerListener.onElementClick(holder.getAdapterPosition())
+        );
+
+        holder.layout.setOnLongClickListener(view -> {
+                recyclerListener.onLongElementClick(holder.getAdapterPosition());
+                return false;
+            }
+        );
     }
 
     @Override
@@ -59,7 +85,7 @@ public class BookAdapter extends
     }
 
     static class CustomViewHolder extends RecyclerView.ViewHolder {
-        private final LinearLayout layout;
+        public final LinearLayout layout;
         private final TextView name;
         private final TextView author;
 
@@ -70,8 +96,7 @@ public class BookAdapter extends
             author = itemView.findViewById(R.id.bookAuthor);
         }
 
-        public void setContent(Context context, String name, String author, Bitmap bitmap)
-        {
+        public void setContent(Context context, String name, String author, Bitmap bitmap) {
             this.name.setText(name);
             this.author.setText(author);
             if (bitmap != null)

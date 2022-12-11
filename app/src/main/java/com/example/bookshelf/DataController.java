@@ -12,6 +12,7 @@ import org.json.JSONException;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class DataController {
     public static final String CARDS_STORAGE_NAME = "cards";
@@ -45,23 +46,34 @@ public class DataController {
         return DataController.getBitmap(key);
     }
 
+    public static void swapBooks(int oldIndex, int newIndex) {
+        Collections.swap(books, oldIndex, newIndex);
+    }
+
+
     public static void putBook(Book book) {
         if (!areFieldsInitialized())
             return;
 
-        String key = book.name + book.author;
-        for (int i = 0; i < books.size(); i++) {
-            Book current = books.get(i);
-            if ((current.name + current.author).equals(key)) {
-                return;
-            }
-        }
+        if (findBook(book.name + book.author) != null)
+            return;
 
         books.add(book);
 
-        SharedPreferences.Editor editor = booksSettings.edit();
-        editor.putString(BOOKS_KEYS, getBooksJSON(books).toString());
-        editor.apply();
+        saveBooks();
+    }
+
+    public static void deleteBook(String key) {
+        Integer found = findBook(key);
+        if (found == null)
+            return;
+
+        SharedPreferences.Editor cardsEditor = cardsSettings.edit();
+        cardsEditor.remove(key); // remove card image
+        cardsEditor.apply();
+
+        books.remove(found.intValue());
+        saveBooks();
     }
 
     public static JSONArray getBooksJSON(ArrayList<Book> data) {
@@ -117,6 +129,22 @@ public class DataController {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public static void saveBooks() {
+        SharedPreferences.Editor booksEditor = booksSettings.edit();
+        booksEditor.putString(BOOKS_KEYS, getBooksJSON(books).toString());
+        booksEditor.apply();
+    }
+
+    private static Integer findBook(String key) {
+        for (int i = 0; i < books.size(); i++) {
+            Book current = books.get(i);
+            if ((current.name + current.author).equals(key)) {
+                return i;
+            }
+        }
+        return null;
     }
 
     private static Boolean areFieldsInitialized() {
