@@ -16,7 +16,8 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 public class BookList extends Fragment implements RecyclerListener {
-    ArrayList<Book> states = new ArrayList<>();
+    private int previousStatesSize = 0;
+    private ArrayList<Book> states = new ArrayList<>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -25,9 +26,13 @@ public class BookList extends Fragment implements RecyclerListener {
             DataController.Init(requireContext());
             setInitialData();
         } else {
-            states = DataController.getBooksArrayFromJSON(
-                    savedInstanceState.getString("states")
-            );
+            if (previousStatesSize == DataController.books.size()) {
+                states = DataController.getBooksArrayFromJSON(
+                        savedInstanceState.getString("states")
+                );
+            } else {
+                setInitialData();
+            }
         }
     }
 
@@ -59,7 +64,9 @@ public class BookList extends Fragment implements RecyclerListener {
         for (int i = 1; i <= 5; i++) {
             states.add(new Book("Name" + i, "Author" + i));
         }*/
+        states.clear();
         states.addAll(DataController.books);
+        previousStatesSize = 0;
     }
 
     @Override

@@ -21,6 +21,13 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
     }
 
+    public void startBookListFragment() {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainerView, new BookList())
+                .commit();
+    }
+
     void handleBackButton() {
         int count = getSupportFragmentManager().getBackStackEntryCount();
         if (count == 0)

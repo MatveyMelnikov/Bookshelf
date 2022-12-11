@@ -17,7 +17,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="8dp"
+            android:layout_margin="16dp"
             android:layout_weight="5"
             android:orientation="horizontal">
 
@@ -43,11 +43,11 @@
                     android:id="@+id/addImageView"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:layout_margin="32dp"
                     android:elevation="8dp"
                     android:foregroundGravity="center"
                     android:scaleType="fitCenter"
                     app:srcCompat="@drawable/ic_image"
-                    android:layout_margin="32dp"
                     tools:ignore="ContentDescription" />
             </FrameLayout>
 

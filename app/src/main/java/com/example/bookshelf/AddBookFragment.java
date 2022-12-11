@@ -87,6 +87,7 @@ public class AddBookFragment extends Fragment {
             if (currentBookCard != null)
                 DataController.putBitmap(bookName + author, currentBookCard);
             DataController.putBook(new Book(bookName, author));
+            ((MainActivity) requireActivity()).startBookListFragment();
         });
 
         return fragmentView;
@@ -164,7 +165,7 @@ public class AddBookFragment extends Fragment {
     }
 
     Bitmap getDarkenBitmap(Bitmap bitmap) {
-        int BRIGHTNESS_PERCENTAGE = 50;
+        int BRIGHTNESS_PERCENTAGE = 60;
         int multiply = (int) ((BRIGHTNESS_PERCENTAGE / 100.0f) * 255);
         Canvas canvas = new Canvas(bitmap);
         Paint paint = new Paint();
@@ -181,7 +182,7 @@ public class AddBookFragment extends Fragment {
 
     Bitmap compressBitmap(Bitmap bitmap) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 60, outputStream);
+        bitmap.compress(Bitmap.CompressFormat.PNG, 50, outputStream);
         return BitmapFactory.decodeStream(
                 new ByteArrayInputStream(outputStream.toByteArray())
         );
