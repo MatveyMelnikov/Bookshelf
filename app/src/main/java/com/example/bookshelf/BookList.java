@@ -55,7 +55,7 @@ public class BookList extends Fragment implements RecyclerListener {
         recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 2));
 
         view.findViewById(R.id.floatingActionButton).setOnClickListener(view1 ->
-                ((MainActivity) requireActivity()).startAddBookFragment()
+                ((MainActivity) requireActivity()).startAddBookFragment(null)
         );
 
         return view;
@@ -75,7 +75,7 @@ public class BookList extends Fragment implements RecyclerListener {
     public void onElementClick(int index) {
         BookAdapter bookAdapter = (BookAdapter) recyclerView.getAdapter();
         bookAdapter.swapItem(index, 0);
-        DataController.swapBooks(index, 0);
+        DataController.addBookToBeginning(index);
     }
 
     @Override
@@ -90,10 +90,15 @@ public class BookList extends Fragment implements RecyclerListener {
         builder.setItems(
                 optionsMenu,
                 (dialogInterface, i) -> {
+                    BookAdapter bookAdapter = (BookAdapter) recyclerView.getAdapter();
                     if (optionsMenu[i].equals("Edit")) {
-                        int a = 3; a += 1;
+                        Bundle bundle = new Bundle();
+                        Book book = bookAdapter.getItem(index);
+                        bundle.putString("name", book.name);
+                        bundle.putString("author", book.author);
+                        ((MainActivity) requireActivity()).startAddBookFragment(bundle);
+
                     } else if (optionsMenu[i].equals("Delete")) {
-                        BookAdapter bookAdapter = (BookAdapter) recyclerView.getAdapter();
                         DataController.deleteBook(bookAdapter.getItemKey(index));
                         bookAdapter.deleteItem(index);
                     }

@@ -35,6 +35,10 @@ import java.io.IOException;
 public class AddBookFragment extends Fragment {
     private ActivityResultLauncher<Intent> activityResultLauncher;
     private Bitmap currentBookCard;
+    private EditText editBookName;
+    private EditText editAuthor;
+    private View bookCard;
+    private Book editableBook = null;
 
     @Override
     public View onCreateView(
@@ -45,6 +49,26 @@ public class AddBookFragment extends Fragment {
         View fragmentView = inflater.inflate(
                 R.layout.fragment_add_book, container, false
         );
+        editBookName = fragmentView.findViewById(R.id.editBookName);
+        editAuthor = fragmentView.findViewById(R.id.editAuthor);
+        bookCard = fragmentView.findViewById(R.id.bookCard);
+
+        Bundle bundle = getArguments();
+        if (bundle != null) {
+            editableBook = new Book(
+                    bundle.getString("name"),
+                    bundle.getString("author")
+            );
+            editBookName.setText(bundle.getString("name"));
+            editAuthor.setText(bundle.getString("author"));
+            Bitmap cardImage = DataController.getBitmap(editableBook.getKey());
+            currentBookCard = cardImage;
+            if (cardImage != null) {
+                bookCard.setBackground(
+                        new BitmapDrawable(requireContext().getResources(), cardImage)
+                );
+            }
+        }
 
         ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
         if (actionBar != null) {
@@ -60,7 +84,7 @@ public class AddBookFragment extends Fragment {
 
                         if (data != null) {
                             currentBookCard = getBookCard(data);
-                            fragmentView.findViewById(R.id.bookCard).setBackground(
+                            bookCard.setBackground(
                                     new BitmapDrawable(
                                             requireContext().getResources(),
                                             currentBookCard
@@ -76,14 +100,13 @@ public class AddBookFragment extends Fragment {
         );
 
         fragmentView.findViewById(R.id.confirmButton).setOnClickListener(view -> {
-            EditText editBookName = (EditText) (fragmentView.findViewById(R.id.editBookName));
-            EditText editAuthor = (EditText) (fragmentView.findViewById(R.id.editAuthor));
-
             String bookName = editBookName.getText().toString();
             String author = editAuthor.getText().toString();
             if (bookName.isEmpty() || author.isEmpty())
                 return;
 
+            if (editableBook != null)
+                DataController.deleteBook(editableBook.getKey());
             if (currentBookCard != null)
                 DataController.putBitmap(bookName + author, currentBookCard);
             DataController.putBook(new Book(bookName, author));

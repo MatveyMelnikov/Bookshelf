@@ -41,6 +41,10 @@ public class BookAdapter extends
         notifyItemRemoved(index);
     }
 
+    public Book getItem(int index) {
+        return books.get(index);
+    }
+
     public String getItemKey(int index) {
         Book book = books.get(index);
         return book.name + book.author;

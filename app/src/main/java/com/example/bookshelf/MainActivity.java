@@ -1,6 +1,7 @@
 package com.example.bookshelf;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -13,10 +14,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
     }
 
-    public void startAddBookFragment() {
+    public void startAddBookFragment(Bundle bundle) {
+        Fragment fragment = new AddBookFragment();
+        fragment.setArguments(bundle);
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.fragmentContainerView, new AddBookFragment())
+                .replace(R.id.fragmentContainerView, fragment)
                 .addToBackStack(null)
                 .commit();
     }

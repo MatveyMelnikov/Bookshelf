@@ -38,4 +38,8 @@ public class Book {
             e.printStackTrace();
         }
     }
+
+    public String getKey() {
+        return name + author;
+    }
 }

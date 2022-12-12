@@ -12,7 +12,6 @@ import org.json.JSONException;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 
 public class DataController {
     public static final String CARDS_STORAGE_NAME = "cards";
@@ -46,8 +45,10 @@ public class DataController {
         return DataController.getBitmap(key);
     }
 
-    public static void swapBooks(int oldIndex, int newIndex) {
-        Collections.swap(books, oldIndex, newIndex);
+    public static void addBookToBeginning(int index) {
+        Book book = books.get(index);
+        books.remove(index);
+        books.add(0, book);
     }
 
 
@@ -58,7 +59,7 @@ public class DataController {
         if (findBook(book.name + book.author) != null)
             return;
 
-        books.add(book);
+        books.add(0, book);
 
         saveBooks();
     }
@@ -89,8 +90,7 @@ public class DataController {
         ArrayList<Book> result = new ArrayList<>();
 
         try {
-            JSONArray jsonArray = null;
-            jsonArray = new JSONArray(data);
+            JSONArray jsonArray = new JSONArray(data);
 
             for (int i = 0; i < jsonArray.length(); i++)
                 result.add(new Book(jsonArray.getJSONObject(i)));
