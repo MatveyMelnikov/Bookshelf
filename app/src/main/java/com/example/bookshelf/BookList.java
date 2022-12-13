@@ -73,9 +73,16 @@ public class BookList extends Fragment implements RecyclerListener {
 
     @Override
     public void onElementClick(int index) {
-        BookAdapter bookAdapter = (BookAdapter) recyclerView.getAdapter();
-        bookAdapter.swapItem(index, 0);
         DataController.addBookToBeginning(index);
+
+        Book book = DataController.books.get(0);
+        Bundle bundle = new Bundle();
+        bundle.putString("name", book.name);
+        bundle.putString("author", book.author);
+        ((MainActivity) requireActivity()).startViewerFragment(bundle);
+
+        BookAdapter bookAdapter = (BookAdapter) recyclerView.getAdapter();
+        bookAdapter.addBookToBeginning(index);
     }
 
     @Override

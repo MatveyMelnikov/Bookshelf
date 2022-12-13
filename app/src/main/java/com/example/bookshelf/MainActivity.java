@@ -31,6 +31,16 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
     }
 
+    public void startViewerFragment(Bundle bundle) {
+        Fragment fragment = new ViewerFragment();
+        fragment.setArguments(bundle);
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainerView, fragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
     void handleBackButton() {
         int count = getSupportFragmentManager().getBackStackEntryCount();
         if (count == 0)
@@ -39,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
             getSupportFragmentManager().popBackStack();
 
         ActionBar actionBar = ((AppCompatActivity) this).getSupportActionBar();
+        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_TITLE);
+        actionBar.setDisplayShowCustomEnabled(false);
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(false);
             actionBar.setTitle("Bookshelf");

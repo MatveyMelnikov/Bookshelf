@@ -50,9 +50,12 @@ public class BookAdapter extends
         return book.name + book.author;
     }
 
-    public void swapItem(int oldIndex, int newIndex) {
-        Collections.swap(books, oldIndex, newIndex);
-        notifyItemMoved(oldIndex, newIndex);
+    public void addBookToBeginning(int index) {
+        Book book = books.get(index);
+        books.remove(index);
+        books.add(0, book);
+        //notifyItemMoved(oldIndex, newIndex);
+        notifyDataSetChanged(); // fix it
     }
 
     @NonNull
