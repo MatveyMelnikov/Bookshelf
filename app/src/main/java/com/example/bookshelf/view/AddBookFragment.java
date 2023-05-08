@@ -1,11 +1,15 @@
-package com.example.bookshelf;
+package com.example.bookshelf.view;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -24,15 +28,22 @@ import android.renderscript.Element;
 import android.renderscript.RenderScript;
 import android.renderscript.ScriptIntrinsicBlur;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+
+import com.example.bookshelf.R;
+import com.example.bookshelf.model.Book;
+import com.example.bookshelf.repository.DataController;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-public class AddBookFragment extends Fragment {
+public class AddBookFragment extends Fragment implements MenuProvider {
     private ActivityResultLauncher<Intent> activityResultLauncher;
     private Bitmap currentBookCard;
     private EditText editBookName;
@@ -49,6 +60,15 @@ public class AddBookFragment extends Fragment {
         View fragmentView = inflater.inflate(
                 R.layout.fragment_add_book, container, false
         );
+        requireActivity().addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.CREATED);
+        OnBackPressedCallback callback = new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                handleBackButton();
+            }
+        };
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), callback);
+
         editBookName = fragmentView.findViewById(R.id.editBookName);
         editAuthor = fragmentView.findViewById(R.id.editAuthor);
         bookCard = fragmentView.findViewById(R.id.bookCard);
@@ -250,5 +270,26 @@ public class AddBookFragment extends Fragment {
                 }
         );
         builder.show();
+    }
+
+
+    @Override
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+
+    }
+
+    @Override
+    public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+        handleBackButton();
+        return true;
+    }
+
+    private void handleBackButton() {
+        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(false);
+            actionBar.setTitle("Bookshelf");
+        }
+        getParentFragmentManager().popBackStack();
     }
 }
