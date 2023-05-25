@@ -43,7 +43,7 @@ public class EntryController {
     }
 
     public static boolean logIn(String login, String password) {
-        User criteria = new User(0, login, "");
+        User criteria = new User(0, login, "", false, null);
         User user = (User) Repository.selectObject(criteria, new UserConverter());
 
         if (user == null)
@@ -70,7 +70,7 @@ public class EntryController {
         String enteredHash = calculateMD5Hash(password);
         if (enteredHash == null)
             return;
-        User user = new User(0, login, enteredHash);
+        User user = new User(0, login, enteredHash, false, null);
         RepositoryConverter converter = new UserConverter();
         Repository.insertNewObject(user, converter);
         User result = (User) Repository.selectObject(user, converter);

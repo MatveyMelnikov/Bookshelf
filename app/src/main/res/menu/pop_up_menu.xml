@@ -1,12 +1,16 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:id="@+id/action_logout"
-        android:title="Logout"
+    <item android:id="@+id/action_quotes"
+        android:title="Show my quotes"
         app:showAsAction="never"/>
 
-    <item android:id="@+id/action_settingsv"
-        android:title="CCCCC"
+    <item android:id="@+id/action_family"
+        android:title="Family"
+        app:showAsAction="never"/>
+
+    <item android:id="@+id/action_logout"
+        android:title="Logout"
         app:showAsAction="never"/>
 
 </menu>

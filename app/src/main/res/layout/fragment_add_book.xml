@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
-            android:layout_weight="5"
+            android:layout_weight="6"
             android:orientation="horizontal">
 
             <Space
@@ -85,10 +85,20 @@
             android:importantForAutofill="no"
             android:inputType="text" />
 
+        <Button
+            android:id="@+id/choosePdf"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:layout_weight="0.5"
+            android:background="@android:color/transparent"
+            android:textColor="@color/purple_700"
+            android:text="Choose file" />
+
         <Space
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="2.7" />
+            android:layout_weight="1.2" />
 
         <Button
             android:id="@+id/confirmButton"

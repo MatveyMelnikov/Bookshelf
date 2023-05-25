@@ -13,14 +13,14 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bookshelf.model.Book;
-import com.example.bookshelf.repository.DataController;
 import com.example.bookshelf.R;
+import com.example.bookshelf.repository.Repository;
+import com.example.bookshelf.repository.converters.BookConverter;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
-public class BookAdapter extends
-        RecyclerView.Adapter<BookAdapter.CustomViewHolder> {
+public class BookAdapter extends RecyclerView.Adapter<BookAdapter.CustomViewHolder> {
     private final ArrayList<Book> books;
     private final RecyclerListener recyclerListener;
     private final WeakReference<Context> context;
@@ -53,8 +53,7 @@ public class BookAdapter extends
         Book book = books.get(index);
         books.remove(index);
         books.add(0, book);
-        //notifyItemMoved(oldIndex, newIndex);
-        notifyDataSetChanged(); // fix it
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -67,11 +66,18 @@ public class BookAdapter extends
     @Override
     public void onBindViewHolder(@NonNull CustomViewHolder holder, int position) {
         Book currentBook = books.get(position);
+
+        com.example.bookshelf.repository.objects.Book bookDB =
+                (com.example.bookshelf.repository.objects.Book) Repository.selectObject(
+                        currentBook.id, new BookConverter()
+                );
+
+        assert bookDB != null;
         holder.setContent(
                 context.get(),
                 currentBook.name,
                 currentBook.author,
-                DataController.loadBookCard(currentBook.name + currentBook.author)
+                bookDB.getCover()
         );
 
         holder.layout.setOnClickListener(view ->

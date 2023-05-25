@@ -3,13 +3,15 @@ package com.example.bookshelf.model;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
+import java.io.Serializable;
 
-public class Book {
+public class Book implements Serializable {
+    public int id;
     public String name;
     public String author;
 
-    public Book(String name, String author) {
+    public Book(int id, String name, String author) {
+        this.id = id;
         this.name = name;
         this.author = author;
     }

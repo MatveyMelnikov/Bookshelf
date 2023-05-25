@@ -15,6 +15,13 @@ public class UserConverter implements RepositoryConverter {
     static final String selectRequestWithName = "SELECT * FROM users WHERE name = '%s';";
     static final String insertRequest = "INSERT INTO users (name, hash) VALUES ('%s', '%s');";
     static final String insertRequestWithId = "INSERT INTO users VALUES (%d, '%s', '%s');";
+    static final String updateRequestWithId = "UPDATE users SET " +
+            "name = '%s', " +
+            "hash = '%s', " +
+            "isChild = %d, " +
+            "familyId = %d " +
+            "where id = %d;";
+    static final String deleteRequestWithId = "DELETE FROM users WHERE id = %d;";
     @Override
     @Nullable
     public RepositoryObject getObject(SQLiteDatabase database, Integer id) {
@@ -24,7 +31,9 @@ public class UserConverter implements RepositoryConverter {
         if (cursor.moveToFirst()) {
             String name = cursor.getString(1);
             String hash = cursor.getString(2);
-            user = new User(id, name, hash);
+            Boolean isChild = cursor.getInt(3) != 0;
+            int familyId = cursor.getInt(4);
+            user = new User(id, name, hash, isChild, familyId);
         }
 
         cursor.close();
@@ -47,7 +56,9 @@ public class UserConverter implements RepositoryConverter {
             int id = cursor.getInt(0);
             String name = cursor.getString(1);
             String hash = cursor.getString(2);
-            user = new User(id, name, hash);
+            Boolean isChild = cursor.getInt(3) != 0;
+            int familyId = cursor.getInt(4);
+            user = new User(id, name, hash, isChild, familyId);
         }
 
         cursor.close();
@@ -70,6 +81,21 @@ public class UserConverter implements RepositoryConverter {
 
         User user = (User)object;
         database.execSQL(getInsertRequestString(user));
+    }
+
+    @Override
+    public void updateObject(SQLiteDatabase database, RepositoryObject object) {
+        if (!(object instanceof User))
+            return;
+
+        User user = (User)object;
+
+        database.execSQL(getUpdateRequestString(user));
+    }
+
+    @Override
+    public void deleteObject(SQLiteDatabase database, Integer id) {
+        database.execSQL(getDeleteRequestString(id));
     }
 
     private String getSelectRequestString(Integer id) {
@@ -95,5 +121,22 @@ public class UserConverter implements RepositoryConverter {
                 object.getName(),
                 object.getHash()
         ).toString();
+    }
+
+    private String getUpdateRequestString(User object) {
+        Formatter formatter = new Formatter();
+        return formatter.format(
+                updateRequestWithId,
+                object.getName(),
+                object.getHash(),
+                object.isChild() ? 1 : 0,
+                object.getFamilyId(),
+                object.getId()
+        ).toString();
+    }
+
+    private String getDeleteRequestString(int id) {
+        Formatter formatter = new Formatter();
+        return formatter.format(deleteRequestWithId, id).toString();
     }
 }

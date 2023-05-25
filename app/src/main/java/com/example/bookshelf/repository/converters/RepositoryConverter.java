@@ -15,4 +15,8 @@ public interface RepositoryConverter {
 
     void insertExistObject(SQLiteDatabase database, RepositoryObject object);
     void insertNewObject(SQLiteDatabase database, RepositoryObject object);
+
+    void updateObject(SQLiteDatabase database, RepositoryObject object);
+
+    void deleteObject(SQLiteDatabase database, Integer id);
 }

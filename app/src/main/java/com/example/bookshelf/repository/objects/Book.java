@@ -7,7 +7,6 @@ import android.util.Base64;
 import androidx.annotation.Nullable;
 
 import java.io.ByteArrayOutputStream;
-import java.net.URI;
 
 public class Book implements RepositoryObject {
     private final int id;
@@ -15,8 +14,7 @@ public class Book implements RepositoryObject {
     private final String name;
     private final String author;
     private final String pdf;
-    private int bookmark;
-    private int quoteId;
+    private int bookmark = 0;
     private Bitmap cover;
 
     public Book(int id, int userId, String name, String author, String pdf) {
@@ -29,10 +27,6 @@ public class Book implements RepositoryObject {
 
     public void setBookmark(int bookmark) {
         this.bookmark = bookmark;
-    }
-
-    public void setQuoteId(int quoteId) {
-        this.quoteId = quoteId;
     }
 
     public void setCover(Bitmap cover) {
@@ -58,10 +52,6 @@ public class Book implements RepositoryObject {
 
     public int getBookmark() {
         return bookmark;
-    }
-
-    public int getQuoteId() {
-        return quoteId;
     }
 
     public String getName() {

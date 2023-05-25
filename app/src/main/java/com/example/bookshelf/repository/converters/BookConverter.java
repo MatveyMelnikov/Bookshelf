@@ -7,17 +7,22 @@ import androidx.annotation.Nullable;
 
 import com.example.bookshelf.repository.objects.Book;
 import com.example.bookshelf.repository.objects.RepositoryObject;
+import com.example.bookshelf.repository.objects.User;
 
 import java.util.Formatter;
 
 public class BookConverter implements RepositoryConverter {
     static final String selectRequest = "SELECT * FROM books WHERE id = %d;";
-    static final String selectRequestWithName = "SELECT * FROM books WHERE name = '%s';";
+    static final String selectRequestWithName = "SELECT * FROM books WHERE name = %s;";
     static final String insertRequest = "INSERT INTO books (" +
-            "userId, name, author, pdf, bookmark, quoteId, cover) VALUES (" +
-            "%d, '%s', '%s', '%s', %d, %d, '%s');";
+            "userId, name, author, pdf, bookmark, cover) VALUES (" +
+            "%d, %s, %s, %s, %d, %s);";
     static final String insertRequestWithId = "INSERT INTO books VALUES (" +
-            "%d, %d, '%s', '%s', '%s', %d, %d, '%s');";
+            "%d, %d, %s, %s, %s, %d, %s);";
+    static final String updateRequestWithId = "UPDATE books SET " +
+            "userId = %d, name = %s, author = %s, pdf = %s, bookmark = %d, " +
+            "cover = %s where id = %d;";
+    static final String deleteRequestWithId = "DELETE FROM books WHERE id = %d;";
 
     @Nullable
     @Override
@@ -26,18 +31,6 @@ public class BookConverter implements RepositoryConverter {
 
         Book book = null;
         if (cursor.moveToFirst()) {
-//            int userId = cursor.getInt(1);
-//            String name = cursor.getString(2);
-//            String author = cursor.getString(3);
-//            String pdf = cursor.getString(4);
-//            int bookmark = cursor.getInt(5);
-//            int quoteId = cursor.getInt(6);
-//            String cover = cursor.getString(7);
-//
-//            book = new Book(id, userId, name, author, pdf);
-//            book.setBookmark(bookmark);
-//            book.setQuoteId(quoteId);
-//            book.setCover(cover);
             book = fillObject(cursor);
         }
 
@@ -83,6 +76,20 @@ public class BookConverter implements RepositoryConverter {
         database.execSQL(getInsertRequestString(user));
     }
 
+    @Override
+    public void updateObject(SQLiteDatabase database, RepositoryObject object) {
+        if (!(object instanceof Book))
+            return;
+
+        Book book = (Book)object;
+        database.execSQL(getUpdateRequestString(book));
+    }
+
+    @Override
+    public void deleteObject(SQLiteDatabase database, Integer id) {
+        database.execSQL(getDeleteRequestString(id));
+    }
+
     private String getSelectRequestString(Integer id) {
         Formatter formatter = new Formatter();
         return formatter.format(selectRequest, id).toString();
@@ -90,7 +97,10 @@ public class BookConverter implements RepositoryConverter {
 
     private String getSelectRequestStringWithName(Book object) {
         Formatter formatter = new Formatter();
-        return formatter.format(selectRequestWithName, object.getName()).toString();
+        return formatter.format(
+                selectRequestWithName,
+                prepareStringField(object.getName())
+        ).toString();
     }
 
     private String getInsertRequestString(Book object) {
@@ -98,12 +108,11 @@ public class BookConverter implements RepositoryConverter {
         return formatter.format(
                 insertRequest,
                 object.getUserId(),
-                object.getName(),
-                object.getAuthor(),
-                object.getPdf(),
+                prepareStringField(object.getName()),
+                prepareStringField(object.getAuthor()),
+                prepareStringField(object.getPdf()),
                 object.getBookmark(),
-                object.getQuoteId(),
-                object.getStringCover()
+                prepareStringField(object.getStringCover())
         ).toString();
     }
 
@@ -113,13 +122,31 @@ public class BookConverter implements RepositoryConverter {
                 insertRequestWithId,
                 object.getId(),
                 object.getUserId(),
-                object.getName(),
-                object.getAuthor(),
-                object.getPdf(),
+                prepareStringField(object.getName()),
+                prepareStringField(object.getAuthor()),
+                prepareStringField(object.getPdf()),
                 object.getBookmark(),
-                object.getQuoteId(),
-                object.getStringCover()
+                prepareStringField(object.getStringCover())
         ).toString();
+    }
+
+    private String getUpdateRequestString(Book object) {
+        Formatter formatter = new Formatter();
+        return formatter.format(
+                updateRequestWithId,
+                object.getUserId(),
+                prepareStringField(object.getName()),
+                prepareStringField(object.getAuthor()),
+                prepareStringField(object.getPdf()),
+                object.getBookmark(),
+                prepareStringField(object.getStringCover()),
+                object.getId()
+        ).toString();
+    }
+
+    private String getDeleteRequestString(int id) {
+        Formatter formatter = new Formatter();
+        return formatter.format(deleteRequestWithId, id).toString();
     }
 
     private Book fillObject(Cursor cursor) {
@@ -129,14 +156,19 @@ public class BookConverter implements RepositoryConverter {
         String author = cursor.getString(3);
         String pdf = cursor.getString(4);
         int bookmark = cursor.getInt(5);
-        int quoteId = cursor.getInt(6);
-        String cover = cursor.getString(7);
+        String cover = cursor.getString(6);
 
         Book book = new Book(id, userId, name, author, pdf);
         book.setBookmark(bookmark);
-        book.setQuoteId(quoteId);
         book.setCover(cover);
 
         return book;
+    }
+
+    private String prepareStringField(@Nullable String field) {
+        if (field == null)
+            return "NULL";
+        else
+            return "'" + field + "'";
     }
 }

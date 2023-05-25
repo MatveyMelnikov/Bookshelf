@@ -21,6 +21,7 @@ import android.graphics.ColorFilter;
 import android.graphics.LightingColorFilter;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.renderscript.Allocation;
@@ -33,67 +34,58 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 
+import com.example.bookshelf.EntryController;
 import com.example.bookshelf.R;
+import com.example.bookshelf.databinding.FragmentAddBookBinding;
 import com.example.bookshelf.model.Book;
-import com.example.bookshelf.repository.DataController;
+import com.example.bookshelf.repository.Repository;
+import com.example.bookshelf.repository.converters.BookConverter;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class AddBookFragment extends Fragment implements MenuProvider {
+    private FragmentAddBookBinding binding;
     private ActivityResultLauncher<Intent> activityResultLauncher;
+    private ActivityResultLauncher<Intent> activityResultLauncherPDF;
     private Bitmap currentBookCard;
-    private EditText editBookName;
-    private EditText editAuthor;
-    private View bookCard;
     private Book editableBook = null;
+    private Uri selectedPdf = null;
 
     @Override
     public View onCreateView(
-            LayoutInflater inflater,
+            @NonNull LayoutInflater inflater,
             ViewGroup container,
             Bundle savedInstanceState
     ) {
-        View fragmentView = inflater.inflate(
-                R.layout.fragment_add_book, container, false
-        );
-        requireActivity().addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.CREATED);
-        OnBackPressedCallback callback = new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                handleBackButton();
-            }
-        };
-        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), callback);
-
-        editBookName = fragmentView.findViewById(R.id.editBookName);
-        editAuthor = fragmentView.findViewById(R.id.editAuthor);
-        bookCard = fragmentView.findViewById(R.id.bookCard);
+        binding = FragmentAddBookBinding.inflate(inflater, container, false);
+        setActionBar();
 
         Bundle bundle = getArguments();
         if (bundle != null) {
-            editableBook = new Book(
-                    bundle.getString("name"),
-                    bundle.getString("author")
-            );
-            editBookName.setText(bundle.getString("name"));
-            editAuthor.setText(bundle.getString("author"));
-            Bitmap cardImage = DataController.getBitmap(editableBook.getKey());
-            currentBookCard = cardImage;
-            if (cardImage != null) {
-                bookCard.setBackground(
-                        new BitmapDrawable(requireContext().getResources(), cardImage)
+            editableBook = (Book) bundle.getSerializable("editableBook");
+            binding.editBookName.setText(editableBook.name);
+            binding.editAuthor.setText(editableBook.author);
+
+            com.example.bookshelf.repository.objects.Book bookDB =
+                    (com.example.bookshelf.repository.objects.Book) Repository.selectObject(
+                            editableBook.id, new BookConverter()
+                    );
+
+            //Bitmap cardImage = DataController.getBitmap(editableBook.getKey());
+            assert bookDB != null;
+            currentBookCard = bookDB.getCover();
+            if (currentBookCard != null) {
+                binding.bookCard.setBackground(
+                        new BitmapDrawable(requireContext().getResources(), currentBookCard)
                 );
             }
-        }
-
-        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setTitle("Adding a book");
         }
 
         activityResultLauncher = registerForActivityResult(
@@ -104,7 +96,7 @@ public class AddBookFragment extends Fragment implements MenuProvider {
 
                         if (data != null) {
                             currentBookCard = getBookCard(data);
-                            bookCard.setBackground(
+                            binding.bookCard.setBackground(
                                     new BitmapDrawable(
                                             requireContext().getResources(),
                                             currentBookCard
@@ -114,26 +106,82 @@ public class AddBookFragment extends Fragment implements MenuProvider {
                     }
                 });
 
-        fragmentView.findViewById(R.id.bookCard).setOnClickListener(view ->
-                //startPickingImageFromGallery()
-                selectSource()
-        );
+        activityResultLauncherPDF = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        assert result.getData() != null;
+                        selectedPdf = result.getData().getData();
 
-        fragmentView.findViewById(R.id.confirmButton).setOnClickListener(view -> {
-            String bookName = editBookName.getText().toString();
-            String author = editAuthor.getText().toString();
-            if (bookName.isEmpty() || author.isEmpty())
+                        binding.choosePdf.setText(R.string.file_selected);
+                    }
+                });
+
+        binding.bookCard.setOnClickListener(v -> selectSource());
+
+        binding.confirmButton.setOnClickListener(v -> {
+            String bookName = binding.editBookName.getText().toString();
+            String author = binding.editAuthor.getText().toString();
+            if (bookName.isEmpty() || author.isEmpty() || selectedPdf == null)
                 return;
 
-            if (editableBook != null)
-                DataController.deleteBook(editableBook.getKey());
+            File pdfFile = savePDFToLocalStorage(
+                    bookName + "_" + author + "_" +
+                            EntryController.getLoggedUser().getName(),
+                    selectedPdf
+            );
+
+            com.example.bookshelf.repository.objects.Book bookDB =
+                    new com.example.bookshelf.repository.objects.Book(
+                            editableBook == null ? 0 : editableBook.id,
+                            EntryController.getLoggedUser().getId(),
+                            bookName,
+                            author,
+                            pdfFile.getAbsolutePath()
+                    );
             if (currentBookCard != null)
-                DataController.putBitmap(bookName + author, currentBookCard);
-            DataController.putBook(new Book(bookName, author));
-            ((MainActivity) requireActivity()).startBookListFragment();
+                bookDB.setCover(currentBookCard);
+
+            if (editableBook != null)
+                Repository.updateObject(bookDB, new BookConverter());
+            else
+                Repository.insertNewObject(bookDB, new BookConverter());
+
+            handleBackButton();
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.fragmentContainerView, new BookListFragment())
+                    .setReorderingAllowed(true)
+                    .commit();
         });
 
-        return fragmentView;
+        binding.choosePdf.setOnClickListener(v -> startPickingFile());
+
+        return binding.getRoot();
+    }
+
+    private File savePDFToLocalStorage(String newFileName, Uri uri) {
+        // Save pdf to local storage
+        try {
+            File myFile = new File(requireActivity().getFilesDir(), newFileName);
+            InputStream inputStream;
+            OutputStream outputStream;
+
+            inputStream = requireActivity().getContentResolver().openInputStream(uri);
+            outputStream = new FileOutputStream(myFile);
+
+            byte[] buf = new byte[1024];
+
+            while (inputStream.read(buf) > 0) {
+                outputStream.write(buf, 0, 1024);
+            }
+
+            outputStream.close();
+            inputStream.close();
+
+            return myFile;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     void startTakingPicture()
@@ -148,6 +196,13 @@ public class AddBookFragment extends Fragment implements MenuProvider {
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("image/*");
         activityResultLauncher.launch(intent);
+    }
+
+    void startPickingFile()
+    {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("application/pdf");
+        activityResultLauncherPDF.launch(intent);
     }
 
     Bitmap blurBitmap(Bitmap bitmap) {
@@ -174,7 +229,7 @@ public class AddBookFragment extends Fragment implements MenuProvider {
         theIntrinsic.forEach(tmpOut);
         tmpOut.copyTo(outputBitmap);
 
-        return outputBitmap;
+        return outputBitmap.copy(Bitmap.Config.ARGB_8888,true);
     }
 
     Bitmap cropImage(Bitmap bitmap) {
@@ -274,9 +329,7 @@ public class AddBookFragment extends Fragment implements MenuProvider {
 
 
     @Override
-    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
-
-    }
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {}
 
     @Override
     public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
@@ -284,11 +337,28 @@ public class AddBookFragment extends Fragment implements MenuProvider {
         return true;
     }
 
+    private void setActionBar() {
+        requireActivity().addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.CREATED);
+        OnBackPressedCallback callback = new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                handleBackButton();
+            }
+        };
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), callback);
+
+        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setTitle("Adding a book");
+        }
+    }
+
     private void handleBackButton() {
         ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(false);
-            actionBar.setTitle("Bookshelf");
+            actionBar.setTitle("Welcome, " + EntryController.getLoggedUser().getName() + "!");
         }
         getParentFragmentManager().popBackStack();
     }

@@ -4,11 +4,16 @@ public class User implements RepositoryObject {
     private final int id;
     private final String name;
     private final String hash;
+    private final Boolean isChild;
 
-    public User(int id, String name, String hash) {
+    private Integer familyId;
+
+    public User(int id, String name, String hash, Boolean isChild, Integer familyId) {
         this.id = id;
         this.name = name;
         this.hash = hash;
+        this.isChild = isChild;
+        this.familyId = familyId;
     }
 
     @Override
@@ -22,5 +27,17 @@ public class User implements RepositoryObject {
 
     public String getHash() {
         return hash;
+    }
+
+    public Boolean isChild() {
+        return isChild;
+    }
+
+    public Integer getFamilyId() {
+        return familyId;
+    }
+
+    public void setFamilyId(Integer familyId) {
+        this.familyId = familyId;
     }
 }
