@@ -9,6 +9,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 
 import android.app.Activity;
@@ -39,8 +40,10 @@ import com.example.bookshelf.EntryController;
 import com.example.bookshelf.R;
 import com.example.bookshelf.databinding.FragmentAddBookBinding;
 import com.example.bookshelf.model.Book;
+import com.example.bookshelf.repository.ChildBookListFragment;
 import com.example.bookshelf.repository.Repository;
 import com.example.bookshelf.repository.converters.BookConverter;
+import com.example.bookshelf.repository.objects.User;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -52,11 +55,39 @@ import java.io.OutputStream;
 
 public class AddBookFragment extends Fragment implements MenuProvider {
     private FragmentAddBookBinding binding;
+    private static final String USER_PARAM = "user";
+    private static final String EDIT_BOOK_PARAM = "editBook";
+    private User user;
     private ActivityResultLauncher<Intent> activityResultLauncher;
     private ActivityResultLauncher<Intent> activityResultLauncherPDF;
     private Bitmap currentBookCard;
     private Book editableBook = null;
     private Uri selectedPdf = null;
+    private FragmentResultListener listener = null;
+
+    public AddBookFragment() {}
+
+    public static AddBookFragment newInstance(User user, Book book) {
+        AddBookFragment fragment = new AddBookFragment();
+        Bundle args = new Bundle();
+        args.putSerializable(USER_PARAM, user);
+        args.putSerializable(EDIT_BOOK_PARAM, book);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            user = (User) getArguments().getSerializable(USER_PARAM);
+            editableBook = (Book) getArguments().getSerializable(EDIT_BOOK_PARAM);
+        }
+    }
+
+    public void setResultListener(FragmentResultListener listener) {
+        this.listener = listener;
+    }
 
     @Override
     public View onCreateView(
@@ -67,9 +98,7 @@ public class AddBookFragment extends Fragment implements MenuProvider {
         binding = FragmentAddBookBinding.inflate(inflater, container, false);
         setActionBar();
 
-        Bundle bundle = getArguments();
-        if (bundle != null) {
-            editableBook = (Book) bundle.getSerializable("editableBook");
+        if (editableBook != null) {
             binding.editBookName.setText(editableBook.name);
             binding.editAuthor.setText(editableBook.author);
 
@@ -77,9 +106,12 @@ public class AddBookFragment extends Fragment implements MenuProvider {
                     (com.example.bookshelf.repository.objects.Book) Repository.selectObject(
                             editableBook.id, new BookConverter()
                     );
-
-            //Bitmap cardImage = DataController.getBitmap(editableBook.getKey());
             assert bookDB != null;
+            //selectedPdf = Uri.parse(bookDB.getPdf());
+            File pdfFile = new File(bookDB.getPdf());
+            selectedPdf = Uri.fromFile(pdfFile);
+            binding.choosePdf.setText(R.string.file_selected);
+
             currentBookCard = bookDB.getCover();
             if (currentBookCard != null) {
                 binding.bookCard.setBackground(
@@ -127,14 +159,14 @@ public class AddBookFragment extends Fragment implements MenuProvider {
 
             File pdfFile = savePDFToLocalStorage(
                     bookName + "_" + author + "_" +
-                            EntryController.getLoggedUser().getName(),
+                            user.getName(),
                     selectedPdf
             );
 
             com.example.bookshelf.repository.objects.Book bookDB =
                     new com.example.bookshelf.repository.objects.Book(
                             editableBook == null ? 0 : editableBook.id,
-                            EntryController.getLoggedUser().getId(),
+                            user.getId(),
                             bookName,
                             author,
                             pdfFile.getAbsolutePath()
@@ -148,10 +180,10 @@ public class AddBookFragment extends Fragment implements MenuProvider {
                 Repository.insertNewObject(bookDB, new BookConverter());
 
             handleBackButton();
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainerView, new BookListFragment())
-                    .setReorderingAllowed(true)
-                    .commit();
+            getParentFragmentManager().popBackStack(
+                    "addBookFragment",
+                    FragmentManager.POP_BACK_STACK_INCLUSIVE
+            );
         });
 
         binding.choosePdf.setOnClickListener(v -> startPickingFile());
@@ -338,14 +370,18 @@ public class AddBookFragment extends Fragment implements MenuProvider {
     }
 
     private void setActionBar() {
-        requireActivity().addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.CREATED);
+        requireActivity().addMenuProvider(
+                this, getViewLifecycleOwner(), Lifecycle.State.CREATED
+        );
         OnBackPressedCallback callback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 handleBackButton();
             }
         };
-        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), callback);
+        requireActivity().getOnBackPressedDispatcher().addCallback(
+                getViewLifecycleOwner(), callback
+        );
 
         ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
         if (actionBar != null) {
@@ -355,11 +391,30 @@ public class AddBookFragment extends Fragment implements MenuProvider {
     }
 
     private void handleBackButton() {
-        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(false);
-            actionBar.setTitle("Welcome, " + EntryController.getLoggedUser().getName() + "!");
+        if (user.isChild()) {
+            ChildBookListFragment.handleBackButton(
+                    requireActivity(), getParentFragmentManager(), user
+            );
+        } else {
+            BookListFragment.handleBackButton(
+                    requireActivity(), getParentFragmentManager()
+            );
         }
-        getParentFragmentManager().popBackStack();
+
+        if (listener != null)
+            listener.handleResult();
     }
+
+//    private void handleBackButton() {
+////        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
+////        if (actionBar != null) {
+////            actionBar.setDisplayHomeAsUpEnabled(false);
+////            actionBar.setTitle("Welcome, " + EntryController.getLoggedUser().getName() + "!");
+////        }
+////        getParentFragmentManager().popBackStack();
+//        BookListFragment.handleBackButton(
+//                requireActivity(), getParentFragmentManager()
+//        );
+//    }
+
 }

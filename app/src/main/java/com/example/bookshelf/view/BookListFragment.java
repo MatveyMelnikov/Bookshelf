@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -34,9 +33,11 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
-public class BookListFragment extends Fragment implements RecyclerListener, MenuProvider {
+public class BookListFragment extends Fragment
+        implements RecyclerListener, MenuProvider, FragmentResultListener {
     FragmentBookListBinding binding;
     private ArrayList<Book> states = new ArrayList<>();
+    private static final String ADD_BOOK_FRAGMENT_NAME = "addBookFragment";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -48,11 +49,14 @@ public class BookListFragment extends Fragment implements RecyclerListener, Menu
 
     @Override
     public View onCreateView(
-            LayoutInflater inflater,
+            @NonNull LayoutInflater inflater,
             ViewGroup container,
             Bundle savedInstanceState
     ) {
         binding = FragmentBookListBinding.inflate(inflater, container, false);
+
+        if (EntryController.getLoggedUser().isChild())
+            binding.floatingActionButton.setVisibility(View.GONE);
 
         BookAdapter adapter = new BookAdapter(
                 new WeakReference<>(getContext()), this, states
@@ -60,12 +64,14 @@ public class BookListFragment extends Fragment implements RecyclerListener, Menu
         binding.bookList.setAdapter(adapter);
         binding.bookList.setLayoutManager(new GridLayoutManager(getActivity(), 2));
 
+//        Fragment fragment = AddBookFragment.newInstance(EntryController.getLoggedUser(), null);
         binding.floatingActionButton.setOnClickListener(view1 ->
-                getParentFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainerView, AddBookFragment.class, null)
-                        .setReorderingAllowed(true)
-                        .addToBackStack(null)
-                        .commit()
+//                getParentFragmentManager().beginTransaction()
+//                        .replace(R.id.fragmentContainerView, fragment, null)
+//                        .setReorderingAllowed(true)
+//                        .addToBackStack(ADD_BOOK_FRAGMENT_NAME)
+//                        .commit
+                startAddBookFragment(null)
         );
 
         requireActivity().addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.CREATED);
@@ -93,11 +99,13 @@ public class BookListFragment extends Fragment implements RecyclerListener, Menu
 
     @Override
     public void onLongElementClick(int index) {
+        if (EntryController.getLoggedUser().isChild())
+            return;
         selectActionsOnBook(index);
     }
 
-    void selectActionsOnBook(int index) {
-        final CharSequence[] optionsMenu = {"Edit", "Delete" };
+    private void selectActionsOnBook(int index) {
+        final CharSequence[] optionsMenu = { "Edit", "Delete" };
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setItems(
@@ -107,17 +115,7 @@ public class BookListFragment extends Fragment implements RecyclerListener, Menu
                     assert bookAdapter != null;
                     Book book = bookAdapter.getItem(index);
                     if (optionsMenu[i].equals("Edit")) {
-                        Bundle bundle = new Bundle();
-                        bundle.putSerializable("editableBook", book);
-                        Fragment fragment = new AddBookFragment();
-                        fragment.setArguments(bundle);
-
-                        getParentFragmentManager()
-                                .beginTransaction()
-                                .replace(R.id.fragmentContainerView, fragment)
-                                .addToBackStack(null)
-                                .commit();
-
+                        startAddBookFragment(book);
                     } else if (optionsMenu[i].equals("Delete")) {
                         BookConverter bookConverter = new BookConverter();
                         com.example.bookshelf.repository.objects.Book bookDB =
@@ -161,37 +159,14 @@ public class BookListFragment extends Fragment implements RecyclerListener, Menu
                 EntryController.logOut();
                 return true;
             case R.id.action_quotes:
-//                QuotesFragment fragment = QuotesFragment.newInstance(Repository.currentBookId);
-//                getParentFragmentManager().beginTransaction()
-//                        .replace(R.id.fragmentContainerView, fragment, null)
-//                        .setReorderingAllowed(true)
-//                        .addToBackStack(null)
-//                        .commit();
                 startFragment(QuotesFragment.newInstance(Repository.currentBookId));
                 return true;
             case R.id.action_family:
-//                FamilyFragment fragment = FamilyFragment.newInstance();
-//                getParentFragmentManager().beginTransaction()
-//                        .replace(R.id.fragmentContainerView, fragment, null)
-//                        .setReorderingAllowed(true)
-//                        .addToBackStack(null)
-//                        .commit();
                 startFragment(FamilyFragment.newInstance());
                 return true;
             default:
                 return false;
         }
-
-//        if (menuItem.getItemId() == R.id.action_logout) {
-//            getParentFragmentManager().beginTransaction()
-//                    .replace(R.id.fragmentContainerView, LoginFragment.class, null)
-//                    .setReorderingAllowed(true)
-//                    .commit();
-//            changeTitle("Bookshelf");
-//            EntryController.logOut();
-//            return true;
-//        }
-        //return false;
     }
 
     private void changeTitle(String title) {
@@ -208,5 +183,28 @@ public class BookListFragment extends Fragment implements RecyclerListener, Menu
             actionBar.setTitle("Welcome, " + EntryController.getLoggedUser().getName() + "!");
         }
         fragmentManager.popBackStack();
+    }
+
+    @Override
+    public void handleResult() {
+        states = Repository.getArrayOfBookModels(EntryController.getLoggedUser().getId());
+        BookAdapter adapter = new BookAdapter(
+                new WeakReference<>(getContext()), this, states
+        );
+        binding.bookList.setAdapter(adapter);
+    }
+
+    private void startAddBookFragment(Book book) {
+        AddBookFragment fragment = AddBookFragment.newInstance(
+                EntryController.getLoggedUser(),
+                book
+        );
+        fragment.setResultListener(this);
+
+        getParentFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainerView, fragment)
+                .addToBackStack(ADD_BOOK_FRAGMENT_NAME)
+                .commit();
     }
 }

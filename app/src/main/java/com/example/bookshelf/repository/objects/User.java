@@ -1,6 +1,8 @@
 package com.example.bookshelf.repository.objects;
 
-public class User implements RepositoryObject {
+import java.io.Serializable;
+
+public class User implements RepositoryObject, Serializable {
     private final int id;
     private final String name;
     private final String hash;

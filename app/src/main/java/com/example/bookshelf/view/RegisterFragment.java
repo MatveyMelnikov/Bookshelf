@@ -6,10 +6,15 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.Lifecycle;
 
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -21,12 +26,7 @@ import com.example.bookshelf.repository.converters.UserConverter;
 import com.example.bookshelf.repository.objects.RepositoryObject;
 import com.example.bookshelf.repository.objects.User;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link RegisterFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class RegisterFragment extends Fragment {
+public class RegisterFragment extends Fragment implements MenuProvider {
     private FragmentRegisterBinding binding;
     // Alternative is registration of child
     private static final String IS_MAIN_REGISTRATION_PARAM = "isMainRegistration";
@@ -54,7 +54,7 @@ public class RegisterFragment extends Fragment {
         binding = FragmentRegisterBinding.inflate(inflater, container, false);
 
         if (!isMainRegistration) {
-            changeTitle("Registration of child account");
+            setActionBar();
             setBackButtonHandler();
         }
 
@@ -107,13 +107,19 @@ public class RegisterFragment extends Fragment {
         return binding.getRoot();
     }
 
-    private void changeTitle(String title) {
+    private void setActionBar() {
         ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
-        if (actionBar != null)
-            actionBar.setTitle(title);
+        if (actionBar == null)
+            return;
+
+        actionBar.setTitle("Registration of child account");
+        actionBar.setDisplayHomeAsUpEnabled(true);
     }
 
     private void setBackButtonHandler() {
+        requireActivity().addMenuProvider(
+                this, getViewLifecycleOwner(), Lifecycle.State.CREATED
+        );
         OnBackPressedCallback callback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -131,5 +137,16 @@ public class RegisterFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    @Override
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {}
+
+    @Override
+    public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+        FamilyFragment.handleBackButton(
+                requireActivity(), getParentFragmentManager()
+        );
+        return true;
     }
 }
