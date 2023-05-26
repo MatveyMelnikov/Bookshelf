@@ -50,7 +50,7 @@ public class FamilyAdapter extends RecyclerView.Adapter<FamilyAdapter.CustomView
     @Override
     public void onBindViewHolder(@NonNull FamilyAdapter.CustomViewHolder holder, int position) {
         String status = users.get(position).isChild() ? "Child" : "Adult";
-        if (family.getCreatorId() == EntryController.getLoggedUser().getId())
+        if (family.getCreatorId() == users.get(position).getId())
             status += ", creator";
 
         holder.setStrings(users.get(position).getName(), status);

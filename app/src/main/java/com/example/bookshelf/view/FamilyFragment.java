@@ -54,8 +54,7 @@ public class FamilyFragment extends Fragment implements RecyclerListener {
 
         if (EntryController.getLoggedUser().getFamilyId() == 0) {
             binding.createFamily.setVisibility(View.VISIBLE);
-        }
-        else {
+        } else {
             binding.addFamilyMember.setVisibility(View.VISIBLE);
 
             ArrayList<User> familyMembers = Repository.getArrayOfAllFamilyMembers();
@@ -103,20 +102,23 @@ public class FamilyFragment extends Fragment implements RecyclerListener {
                 optionsMenu,
                 (dialogInterface, i) -> {
                     if (optionsMenu[i].equals("Register child account")) {
-                        startFragment(RegisterFragment.newInstance(false));
+                        startFragment(
+                                RegisterFragment.newInstance(false),
+                                "registration"
+                        );
                     } else if (optionsMenu[i].equals("Add account")) {
-                        int b = 4;
+                        startFragment(AddMemberFragment.newInstance(), "add_member");
                     }
                 }
         );
         builder.show();
     }
 
-    private void startFragment(Fragment fragment) {
+    private void startFragment(Fragment fragment, String name) {
         getParentFragmentManager().beginTransaction()
                 .replace(R.id.fragmentContainerView, fragment, null)
                 .setReorderingAllowed(true)
-                .addToBackStack(null)
+                .addToBackStack(name)
                 .commit();
     }
 

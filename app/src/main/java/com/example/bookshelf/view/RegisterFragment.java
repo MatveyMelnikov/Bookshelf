@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,7 +30,7 @@ public class RegisterFragment extends Fragment {
     private FragmentRegisterBinding binding;
     // Alternative is registration of child
     private static final String IS_MAIN_REGISTRATION_PARAM = "isMainRegistration";
-    private Boolean isMainRegistration;
+    private Boolean isMainRegistration = true;
 
     public RegisterFragment() {}
     public static RegisterFragment newInstance(Boolean isMainRegistration) {
@@ -81,15 +82,26 @@ public class RegisterFragment extends Fragment {
                 binding.errorMessage.setVisibility(View.VISIBLE);
                 return;
             }
-            EntryController.register(login, password);
-            // Success
-            Class<? extends androidx.fragment.app.Fragment> fragmentClass =
-                    isMainRegistration ? BookListFragment.class : FamilyFragment.class;
 
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainerView, fragmentClass, null)
-                    .setReorderingAllowed(true)
-                    .commit();
+            if (isMainRegistration) {
+                EntryController.register(login, password, false, null, true);
+                getParentFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainerView, BookListFragment.class, null)
+                        .setReorderingAllowed(true)
+                        .commit();
+            } else {
+                EntryController.register(
+                        login,
+                        password,
+                        true,
+                        EntryController.getLoggedUser().getFamilyId(),
+                        false
+                );
+                getParentFragmentManager().popBackStack(
+                        "registration",
+                        FragmentManager.POP_BACK_STACK_INCLUSIVE
+                );
+            }
         });
 
         return binding.getRoot();

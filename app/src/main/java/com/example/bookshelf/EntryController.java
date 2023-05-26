@@ -66,17 +66,25 @@ public class EntryController {
         editor.apply();
     }
 
-    public static void register(String login, String password) {
+    public static void register(
+            String login,
+            String password,
+            Boolean isChild,
+            Integer familyId,
+            Boolean remember
+    ) {
         String enteredHash = calculateMD5Hash(password);
         if (enteredHash == null)
             return;
-        User user = new User(0, login, enteredHash, false, null);
+        User user = new User(0, login, enteredHash, isChild, familyId);
         RepositoryConverter converter = new UserConverter();
         Repository.insertNewObject(user, converter);
         User result = (User) Repository.selectObject(user, converter);
 
-        assert result != null;
-        rememberUser(result);
+        if (remember) {
+            assert result != null;
+            rememberUser(result);
+        }
     }
 
     public static User getLoggedUser() {

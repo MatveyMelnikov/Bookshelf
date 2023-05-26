@@ -31,10 +31,11 @@ public class LoginFragment extends Fragment {
         binding = FragmentLoginBinding.inflate(inflater, container, false);
 
         binding.register.setOnClickListener(v -> {
+            RegisterFragment fragment = RegisterFragment.newInstance(true);
             getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainerView, RegisterFragment.class, null)
+                    .replace(R.id.fragmentContainerView, fragment, null)
                     .setReorderingAllowed(true)
-                    .addToBackStack(null)
+                    .addToBackStack("registration")
                     .commit();
         });
 

@@ -13,8 +13,11 @@ import java.util.Formatter;
 public class UserConverter implements RepositoryConverter {
     static final String selectRequest = "SELECT * FROM users WHERE id = %d;";
     static final String selectRequestWithName = "SELECT * FROM users WHERE name = '%s';";
-    static final String insertRequest = "INSERT INTO users (name, hash) VALUES ('%s', '%s');";
-    static final String insertRequestWithId = "INSERT INTO users VALUES (%d, '%s', '%s');";
+    static final String insertRequest = "INSERT INTO users " +
+            "(name, hash, isChild, familyId) " +
+            "VALUES ('%s', '%s', %d, %d);";
+    static final String insertRequestWithId = "INSERT INTO users " +
+            "VALUES (%d, '%s', '%s', %d, %d);";
     static final String updateRequestWithId = "UPDATE users SET " +
             "name = '%s', " +
             "hash = '%s', " +
@@ -110,7 +113,13 @@ public class UserConverter implements RepositoryConverter {
 
     private String getInsertRequestString(User object) {
         Formatter formatter = new Formatter();
-        return formatter.format(insertRequest, object.getName(), object.getHash()).toString();
+        return formatter.format(
+                insertRequest,
+                object.getName(),
+                object.getHash(),
+                object.isChild() ? 1 : 0,
+                object.getFamilyId()
+        ).toString();
     }
 
     private String getInsertRequestStringWithId(User object) {
@@ -119,7 +128,9 @@ public class UserConverter implements RepositoryConverter {
                 insertRequestWithId,
                 object.getId(),
                 object.getName(),
-                object.getHash()
+                object.getHash(),
+                object.isChild() ? 1 : 0,
+                object.getFamilyId()
         ).toString();
     }
 
