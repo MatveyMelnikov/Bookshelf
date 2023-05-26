@@ -49,6 +49,10 @@ public class LoginFragment extends Fragment {
                 return;
             }
 
+            getParentFragmentManager().popBackStack( // Clear stack
+                    null,
+                    FragmentManager.POP_BACK_STACK_INCLUSIVE
+            );
             // Success
             getParentFragmentManager().beginTransaction()
                     .replace(R.id.fragmentContainerView, BookListFragment.class, null)

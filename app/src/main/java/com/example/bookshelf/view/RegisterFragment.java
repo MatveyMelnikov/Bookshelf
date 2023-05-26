@@ -85,6 +85,10 @@ public class RegisterFragment extends Fragment implements MenuProvider {
 
             if (isMainRegistration) {
                 EntryController.register(login, password, false, null, true);
+                getParentFragmentManager().popBackStack( // Clear stack
+                        null,
+                        FragmentManager.POP_BACK_STACK_INCLUSIVE
+                );
                 getParentFragmentManager().beginTransaction()
                         .replace(R.id.fragmentContainerView, BookListFragment.class, null)
                         .setReorderingAllowed(true)
