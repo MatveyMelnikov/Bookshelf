@@ -14,16 +14,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Bookshelf"
         tools:targetApi="31">
-        <activity
-            android:name=".view.selection.QuoteActivity"
-            android:label="Save quote"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.PROCESS_TEXT" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
-            </intent-filter>
-        </activity>
+<!--        <activity-->
+<!--            android:name=".view.selection.QuoteActivity"-->
+<!--            android:label="Save quote"-->
+<!--            android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.PROCESS_TEXT" />-->
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--                <data android:mimeType="text/plain" />-->
+<!--            </intent-filter>-->
+<!--        </activity>-->
         <activity
             android:name=".view.ViewerFragment"
             android:exported="false">

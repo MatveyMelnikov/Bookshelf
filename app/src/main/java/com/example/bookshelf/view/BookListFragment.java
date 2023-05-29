@@ -64,13 +64,7 @@ public class BookListFragment extends Fragment
         binding.bookList.setAdapter(adapter);
         binding.bookList.setLayoutManager(new GridLayoutManager(getActivity(), 2));
 
-//        Fragment fragment = AddBookFragment.newInstance(EntryController.getLoggedUser(), null);
         binding.floatingActionButton.setOnClickListener(view1 ->
-//                getParentFragmentManager().beginTransaction()
-//                        .replace(R.id.fragmentContainerView, fragment, null)
-//                        .setReorderingAllowed(true)
-//                        .addToBackStack(ADD_BOOK_FRAGMENT_NAME)
-//                        .commit
                 startAddBookFragment(null)
         );
 

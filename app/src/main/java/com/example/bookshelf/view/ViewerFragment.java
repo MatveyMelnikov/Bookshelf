@@ -6,9 +6,14 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -19,6 +24,8 @@ import com.example.bookshelf.databinding.ViewerActionBarBinding;
 import com.example.bookshelf.model.Book;
 import com.example.bookshelf.repository.Repository;
 import com.example.bookshelf.repository.converters.BookConverter;
+import com.example.bookshelf.repository.converters.QuoteConverter;
+import com.example.bookshelf.repository.objects.Quote;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 
@@ -62,9 +69,12 @@ public class ViewerFragment extends Fragment {
             currentBookInDB = (com.example.bookshelf.repository.objects.Book)
                     Repository.selectObject(currentBook.id, new BookConverter());
             assert currentBookInDB != null;
-            if (currentBookInDB.getBookmark() != 0)
+            if (currentBookInDB.getBookmark() != 0) {
                 currentPage = currentBookInDB.getBookmark();
+                actionBarBinding.bookmark.setImageResource(R.drawable.ic_bookmark_activated);
+            }
         }
+
         actionBarBinding.nextButton.setOnClickListener(v -> {
             if (currentPage >= pagesNum)
                 return;
@@ -97,6 +107,7 @@ public class ViewerFragment extends Fragment {
             assert currentBookInDB != null;
             currentBookInDB.setBookmark(currentPage);
             Repository.updateObject(currentBookInDB, new BookConverter());
+            actionBarBinding.bookmark.setImageResource(R.drawable.ic_bookmark_activated);
         });
 
         actionBarBinding.quotes.setOnClickListener(v -> {
@@ -108,7 +119,57 @@ public class ViewerFragment extends Fragment {
                     .commit();
         });
 
+        binding.viewerText.setCustomSelectionActionModeCallback(new ActionMode.Callback() {
+            @Override
+            public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
+                Activity activity = getActivity();
+                assert activity != null;
+                activity.getMenuInflater().inflate(R.menu.text_selection_menu, menu);
+                return true;
+            }
+
+            @Override
+            public boolean onPrepareActionMode(ActionMode actionMode, Menu menu) {
+                return false;
+            }
+
+            @Override
+            public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
+                if (menuItem.getItemId() == R.id.menu_item_quote) {
+                    String text = getSelectedText();
+                    if (text.isEmpty())
+                        return true;
+
+                    Quote quote = new Quote(0, Repository.currentBookId, text);
+                    Repository.insertNewObject(quote, new QuoteConverter());
+
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public void onDestroyActionMode(ActionMode actionMode) {}
+        });
+
         return binding.getRoot();
+    }
+
+    private String getSelectedText() {
+        String result = "";
+//        int min = 0;
+//        int max = binding.viewerText.getText().length();
+        if (binding.viewerText.isFocused()) {
+            final int startIndex = binding.viewerText.getSelectionStart();
+            final int endIndex = binding.viewerText.getSelectionEnd();
+
+            //int min = Math.max(0, Math.min(textStartIndex, textEndIndex));
+            //int max = Math.max(0, Math.max(textStartIndex, textEndIndex));
+            //selectedText = binding.viewerText.getText().subSequence(min, max).toString().trim();
+            result = binding.viewerText.getText().subSequence(startIndex, endIndex).toString().trim();
+        }
+        return result;
+        // Perform your
     }
 
     private void loadPDF() throws IOException {
@@ -155,14 +216,4 @@ public class ViewerFragment extends Fragment {
         binding = null;
         actionBarBinding = null;
     }
-
-//    private void handleBackButton() {
-//        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
-//        if (actionBar != null) {
-//            actionBar.setDisplayShowCustomEnabled(false);
-//            actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_TITLE);
-//            actionBar.setTitle("Welcome, " + EntryController.getLoggedUser().getName() + "!");
-//        }
-//        getParentFragmentManager().popBackStack();
-//    }
 }
