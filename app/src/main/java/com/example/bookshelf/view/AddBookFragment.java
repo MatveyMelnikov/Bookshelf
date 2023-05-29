@@ -36,7 +36,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.bookshelf.EntryController;
 import com.example.bookshelf.R;
 import com.example.bookshelf.databinding.FragmentAddBookBinding;
 import com.example.bookshelf.model.Book;
@@ -404,17 +403,4 @@ public class AddBookFragment extends Fragment implements MenuProvider {
         if (listener != null)
             listener.handleResult();
     }
-
-//    private void handleBackButton() {
-////        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
-////        if (actionBar != null) {
-////            actionBar.setDisplayHomeAsUpEnabled(false);
-////            actionBar.setTitle("Welcome, " + EntryController.getLoggedUser().getName() + "!");
-////        }
-////        getParentFragmentManager().popBackStack();
-//        BookListFragment.handleBackButton(
-//                requireActivity(), getParentFragmentManager()
-//        );
-//    }
-
 }

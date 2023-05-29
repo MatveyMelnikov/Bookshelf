@@ -9,7 +9,6 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.bookshelf.EntryController;
 import com.example.bookshelf.R;
 import com.example.bookshelf.repository.objects.Family;
 import com.example.bookshelf.repository.objects.User;

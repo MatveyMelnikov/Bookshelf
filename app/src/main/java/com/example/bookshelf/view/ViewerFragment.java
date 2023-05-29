@@ -12,12 +12,10 @@ import android.os.Bundle;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.bookshelf.EntryController;
 import com.example.bookshelf.R;
 import com.example.bookshelf.databinding.FragmentViewerBinding;
 import com.example.bookshelf.databinding.ViewerActionBarBinding;
@@ -33,7 +31,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-//public class ViewerFragment extends Fragment implements MenuProvider {
 public class ViewerFragment extends Fragment {
     private FragmentViewerBinding binding;
     private ViewerActionBarBinding actionBarBinding;
@@ -157,19 +154,13 @@ public class ViewerFragment extends Fragment {
 
     private String getSelectedText() {
         String result = "";
-//        int min = 0;
-//        int max = binding.viewerText.getText().length();
         if (binding.viewerText.isFocused()) {
             final int startIndex = binding.viewerText.getSelectionStart();
             final int endIndex = binding.viewerText.getSelectionEnd();
 
-            //int min = Math.max(0, Math.min(textStartIndex, textEndIndex));
-            //int max = Math.max(0, Math.max(textStartIndex, textEndIndex));
-            //selectedText = binding.viewerText.getText().subSequence(min, max).toString().trim();
             result = binding.viewerText.getText().subSequence(startIndex, endIndex).toString().trim();
         }
         return result;
-        // Perform your
     }
 
     private void loadPDF() throws IOException {
@@ -184,7 +175,6 @@ public class ViewerFragment extends Fragment {
         OnBackPressedCallback callback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                //handleBackButton();
                 BookListFragment.handleBackButton(
                         requireActivity(), getParentFragmentManager()
                 );
@@ -196,8 +186,10 @@ public class ViewerFragment extends Fragment {
     private void changePagePDF(int nextPage) throws IOException {
         File pdfFile = new File(currentBookInDB.getPdf());
         Uri uri = Uri.fromFile(pdfFile);
+        Activity activity = getActivity();
+        assert activity != null;
 
-        InputStream inputStream = getActivity().getContentResolver().openInputStream(uri);
+        InputStream inputStream = activity.getContentResolver().openInputStream(uri);
 
         PdfReader reader = new PdfReader(inputStream);
         pagesNum = reader.getNumberOfPages();
