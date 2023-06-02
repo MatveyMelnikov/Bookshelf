@@ -24,10 +24,8 @@ public class FamilyConverter implements RepositoryConverter {
         Cursor cursor = database.rawQuery(getSelectRequestString(id), null);
 
         Family family = null;
-        if (cursor.moveToFirst()) {
-            int creatorId = cursor.getInt(1);
-            family = new Family(id, creatorId);
-        }
+        if (cursor.moveToFirst())
+            family = fillObject(cursor);
 
         cursor.close();
         return family;
@@ -45,11 +43,8 @@ public class FamilyConverter implements RepositoryConverter {
         );
 
         Family family = null;
-        if (cursor.moveToFirst()) {
-            int id = cursor.getInt(0);
-            int creatorId = cursor.getInt(1);
-            family = new Family(id, creatorId);
-        }
+        if (cursor.moveToFirst())
+            family = fillObject(cursor);
 
         cursor.close();
         return family;
@@ -118,6 +113,12 @@ public class FamilyConverter implements RepositoryConverter {
                 object.getCreatorId(),
                 object.getId()
         ).toString();
+    }
+
+    private Family fillObject(Cursor cursor) {
+        int id = cursor.getInt(0);
+        int creatorId = cursor.getInt(1);
+        return new Family(id, creatorId);
     }
 
     private String getDeleteRequestString(int id) {

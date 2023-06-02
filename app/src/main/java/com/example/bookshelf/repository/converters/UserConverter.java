@@ -31,13 +31,8 @@ public class UserConverter implements RepositoryConverter {
         Cursor cursor = database.rawQuery(getSelectRequestString(id), null);
 
         User user = null;
-        if (cursor.moveToFirst()) {
-            String name = cursor.getString(1);
-            String hash = cursor.getString(2);
-            Boolean isChild = cursor.getInt(3) != 0;
-            int familyId = cursor.getInt(4);
-            user = new User(id, name, hash, isChild, familyId);
-        }
+        if (cursor.moveToFirst())
+            user = fillObject(cursor);
 
         cursor.close();
         return user;
@@ -55,14 +50,8 @@ public class UserConverter implements RepositoryConverter {
         );
 
         User user = null;
-        if (cursor.moveToFirst()) {
-            int id = cursor.getInt(0);
-            String name = cursor.getString(1);
-            String hash = cursor.getString(2);
-            Boolean isChild = cursor.getInt(3) != 0;
-            int familyId = cursor.getInt(4);
-            user = new User(id, name, hash, isChild, familyId);
-        }
+        if (cursor.moveToFirst())
+            user = fillObject(cursor);
 
         cursor.close();
         return user;
@@ -144,6 +133,15 @@ public class UserConverter implements RepositoryConverter {
                 object.getFamilyId(),
                 object.getId()
         ).toString();
+    }
+
+    private User fillObject(Cursor cursor) {
+        int id = cursor.getInt(0);
+        String name = cursor.getString(1);
+        String hash = cursor.getString(2);
+        Boolean isChild = cursor.getInt(3) != 0;
+        int familyId = cursor.getInt(4);
+        return new User(id, name, hash, isChild, familyId);
     }
 
     private String getDeleteRequestString(int id) {

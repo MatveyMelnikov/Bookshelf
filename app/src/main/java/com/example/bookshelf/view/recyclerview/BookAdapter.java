@@ -1,5 +1,6 @@
 package com.example.bookshelf.view.recyclerview;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -12,10 +13,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.bookshelf.model.Book;
 import com.example.bookshelf.R;
-import com.example.bookshelf.repository.Repository;
-import com.example.bookshelf.repository.converters.BookConverter;
+import com.example.bookshelf.repository.objects.Book;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -44,11 +43,8 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.CustomViewHold
         return books.get(index);
     }
 
-    public String getItemKey(int index) {
-        Book book = books.get(index);
-        return book.name + book.author;
-    }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void addBookToBeginning(int index) {
         Book book = books.get(index);
         books.remove(index);
@@ -65,19 +61,12 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.CustomViewHold
 
     @Override
     public void onBindViewHolder(@NonNull CustomViewHolder holder, int position) {
-        Book currentBook = books.get(position);
-
-        com.example.bookshelf.repository.objects.Book bookDB =
-                (com.example.bookshelf.repository.objects.Book) Repository.selectObject(
-                        currentBook.id, new BookConverter()
-                );
-
-        assert bookDB != null;
+        Book book = books.get(position);
         holder.setContent(
                 context.get(),
-                currentBook.name,
-                currentBook.author,
-                bookDB.getCover()
+                book.getName(),
+                book.getAuthor(),
+                book.getCover()
         );
 
         holder.layout.setOnClickListener(view ->

@@ -23,9 +23,9 @@ import android.view.ViewGroup;
 import com.example.bookshelf.EntryController;
 import com.example.bookshelf.R;
 import com.example.bookshelf.databinding.FragmentBookListBinding;
-import com.example.bookshelf.model.Book;
 import com.example.bookshelf.repository.Repository;
 import com.example.bookshelf.repository.converters.BookConverter;
+import com.example.bookshelf.repository.objects.Book;
 import com.example.bookshelf.view.recyclerview.BookAdapter;
 import com.example.bookshelf.view.recyclerview.RecyclerListener;
 
@@ -36,7 +36,7 @@ import java.util.ArrayList;
 public class BookListFragment extends Fragment
         implements RecyclerListener, MenuProvider, FragmentResultListener {
     FragmentBookListBinding binding;
-    private ArrayList<Book> states = new ArrayList<>();
+    private ArrayList<Book> books = new ArrayList<>();
     private static final String ADD_BOOK_FRAGMENT_NAME = "addBookFragment";
 
     @Override
@@ -44,7 +44,7 @@ public class BookListFragment extends Fragment
         super.onCreate(savedInstanceState);
         changeTitle("Welcome, " + EntryController.getLoggedUser().getName() + "!");
 
-        states = Repository.getArrayOfBookModels(EntryController.getLoggedUser().getId());
+        books = Repository.getArrayOfBookModels(EntryController.getLoggedUser().getId());
     }
 
     @Override
@@ -59,7 +59,7 @@ public class BookListFragment extends Fragment
             binding.floatingActionButton.setVisibility(View.GONE);
 
         BookAdapter adapter = new BookAdapter(
-                new WeakReference<>(getContext()), this, states
+                new WeakReference<>(getContext()), this, books
         );
         binding.bookList.setAdapter(adapter);
         binding.bookList.setLayoutManager(new GridLayoutManager(getActivity(), 2));
@@ -78,10 +78,7 @@ public class BookListFragment extends Fragment
         BookAdapter bookAdapter = (BookAdapter) binding.bookList.getAdapter();
         assert bookAdapter != null;
 
-        Fragment fragment = new ViewerFragment();
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("book", bookAdapter.getItem(index));
-        fragment.setArguments(bundle);
+        Fragment fragment = ViewerFragment.newInstance(bookAdapter.getItem(index).getId());
         getParentFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragmentContainerView, fragment)
@@ -112,14 +109,10 @@ public class BookListFragment extends Fragment
                         startAddBookFragment(book);
                     } else if (optionsMenu[i].equals("Delete")) {
                         BookConverter bookConverter = new BookConverter();
-                        com.example.bookshelf.repository.objects.Book bookDB =
-                                (com.example.bookshelf.repository.objects.Book)
-                                        Repository.selectObject(book.id, bookConverter);
-                        assert bookDB != null;
-                        File localFile = new File(bookDB.getPdf());
+                        File localFile = new File(book.getPdf());
                         localFile.delete();
 
-                        Repository.deleteObject(book.id, bookConverter);
+                        Repository.deleteObject(book.getId(), bookConverter);
                         bookAdapter.deleteItem(index);
                     }
                 }
@@ -153,7 +146,7 @@ public class BookListFragment extends Fragment
                 EntryController.logOut();
                 return true;
             case R.id.action_quotes:
-                startFragment(QuotesFragment.newInstance(Repository.currentBookId));
+                startFragment(QuotesFragment.newInstance(0));
                 return true;
             case R.id.action_family:
                 startFragment(FamilyFragment.newInstance());
@@ -181,9 +174,9 @@ public class BookListFragment extends Fragment
 
     @Override
     public void handleResult() {
-        states = Repository.getArrayOfBookModels(EntryController.getLoggedUser().getId());
+        books = Repository.getArrayOfBookModels(EntryController.getLoggedUser().getId());
         BookAdapter adapter = new BookAdapter(
-                new WeakReference<>(getContext()), this, states
+                new WeakReference<>(getContext()), this, books
         );
         binding.bookList.setAdapter(adapter);
     }
@@ -191,7 +184,7 @@ public class BookListFragment extends Fragment
     private void startAddBookFragment(Book book) {
         AddBookFragment fragment = AddBookFragment.newInstance(
                 EntryController.getLoggedUser(),
-                book
+                book == null ? 0 : book.getId()
         );
         fragment.setResultListener(this);
 

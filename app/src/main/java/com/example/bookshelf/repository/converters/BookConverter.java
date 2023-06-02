@@ -7,7 +7,6 @@ import androidx.annotation.Nullable;
 
 import com.example.bookshelf.repository.objects.Book;
 import com.example.bookshelf.repository.objects.RepositoryObject;
-import com.example.bookshelf.repository.objects.User;
 
 import java.util.Formatter;
 

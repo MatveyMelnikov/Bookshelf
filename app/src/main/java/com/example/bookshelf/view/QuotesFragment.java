@@ -53,6 +53,12 @@ public class QuotesFragment extends Fragment implements RecyclerListener, MenuPr
     }
 
     @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
+
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         binding = FragmentQuotesBinding.inflate(inflater, container, false);

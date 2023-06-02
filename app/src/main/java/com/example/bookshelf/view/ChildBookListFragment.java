@@ -1,4 +1,4 @@
-package com.example.bookshelf.repository;
+package com.example.bookshelf.view;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -23,13 +23,10 @@ import android.view.ViewGroup;
 
 import com.example.bookshelf.R;
 import com.example.bookshelf.databinding.FragmentChildBookListBinding;
-import com.example.bookshelf.model.Book;
+import com.example.bookshelf.repository.Repository;
 import com.example.bookshelf.repository.converters.BookConverter;
+import com.example.bookshelf.repository.objects.Book;
 import com.example.bookshelf.repository.objects.User;
-import com.example.bookshelf.view.AddBookFragment;
-import com.example.bookshelf.view.BookListFragment;
-import com.example.bookshelf.view.FamilyFragment;
-import com.example.bookshelf.view.FragmentResultListener;
 import com.example.bookshelf.view.recyclerview.BookAdapter;
 import com.example.bookshelf.view.recyclerview.RecyclerListener;
 
@@ -62,6 +59,12 @@ public class ChildBookListFragment extends Fragment
             user = (User) getArguments().getSerializable(USER_PARAM);
             states = Repository.getArrayOfBookModels(user.getId());
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 
     @Override
@@ -118,14 +121,10 @@ public class ChildBookListFragment extends Fragment
 
                     } else if (optionsMenu[i].equals("Delete")) {
                         BookConverter bookConverter = new BookConverter();
-                        com.example.bookshelf.repository.objects.Book bookDB =
-                                (com.example.bookshelf.repository.objects.Book)
-                                        Repository.selectObject(book.id, bookConverter);
-                        assert bookDB != null;
-                        File localFile = new File(bookDB.getPdf());
+                        File localFile = new File(book.getPdf());
                         localFile.delete();
 
-                        Repository.deleteObject(book.id, bookConverter);
+                        Repository.deleteObject(book.getId(), bookConverter);
                         bookAdapter.deleteItem(index);
                     }
                 }
@@ -183,7 +182,10 @@ public class ChildBookListFragment extends Fragment
     }
 
     private void startAddBookFragment(Book book) {
-        AddBookFragment fragment = AddBookFragment.newInstance(user, book);
+        AddBookFragment fragment = AddBookFragment.newInstance(
+                user,
+                book == null ? 0 : book.getId()
+        );
         fragment.setResultListener(this);
 
         getParentFragmentManager()

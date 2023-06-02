@@ -2,15 +2,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item android:id="@+id/action_quotes"
-        android:title="Show my quotes"
+        android:title="@string/quotes"
         app:showAsAction="never"/>
 
     <item android:id="@+id/action_family"
-        android:title="Family"
+        android:title="@string/action_family"
         app:showAsAction="never"/>
 
     <item android:id="@+id/action_logout"
-        android:title="Logout"
+        android:title="@string/action_logout"
         app:showAsAction="never"/>
 
 </menu>

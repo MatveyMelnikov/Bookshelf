@@ -19,10 +19,10 @@ import android.view.ViewGroup;
 import com.example.bookshelf.R;
 import com.example.bookshelf.databinding.FragmentViewerBinding;
 import com.example.bookshelf.databinding.ViewerActionBarBinding;
-import com.example.bookshelf.model.Book;
 import com.example.bookshelf.repository.Repository;
 import com.example.bookshelf.repository.converters.BookConverter;
 import com.example.bookshelf.repository.converters.QuoteConverter;
+import com.example.bookshelf.repository.objects.Book;
 import com.example.bookshelf.repository.objects.Quote;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
@@ -33,11 +33,33 @@ import java.io.InputStream;
 
 public class ViewerFragment extends Fragment {
     private FragmentViewerBinding binding;
+    private static final String BOOK_PARAM = "book";
     private ViewerActionBarBinding actionBarBinding;
     private Book currentBook;
-    private com.example.bookshelf.repository.objects.Book currentBookInDB;
     private int currentPage = 1;
     private int pagesNum = 0;
+
+    public ViewerFragment() {}
+
+    public static ViewerFragment newInstance(Integer bookId) {
+        ViewerFragment fragment = new ViewerFragment();
+        Bundle args = new Bundle();
+        args.putInt(BOOK_PARAM, bookId);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            int bookId = getArguments().getInt(BOOK_PARAM, 0);
+            if (bookId != 0) {
+                currentBook = (Book) Repository.selectObject(bookId, new BookConverter());
+            }
+        }
+    }
+
     @Override
     public View onCreateView(
             @NonNull LayoutInflater inflater,
@@ -55,19 +77,16 @@ public class ViewerFragment extends Fragment {
         actionBar.setCustomView(actionBarBinding.getRoot());
         setBackButtonHandler();
 
-        Bundle bundle = getArguments();
-        if (bundle != null) {
-            currentBook = (Book) bundle.getSerializable("book");
+        if (currentBook != null) {
             binding.bottomText.setText(
-                    getString(R.string.book_indicator, currentBook.author, currentBook.name)
+                    getString(R.string.book_indicator,
+                            currentBook.getAuthor(),
+                            currentBook.getName()
+                    )
             );
-            Repository.currentBookId = currentBook.id;
 
-            currentBookInDB = (com.example.bookshelf.repository.objects.Book)
-                    Repository.selectObject(currentBook.id, new BookConverter());
-            assert currentBookInDB != null;
-            if (currentBookInDB.getBookmark() != 0) {
-                currentPage = currentBookInDB.getBookmark();
+            if (currentBook.getBookmark() != 0) {
+                currentPage = currentBook.getBookmark();
                 actionBarBinding.bookmark.setImageResource(R.drawable.ic_bookmark_activated);
             }
         }
@@ -93,22 +112,19 @@ public class ViewerFragment extends Fragment {
         });
 
         try {
-            loadPDF();
+            changePagePDF(currentPage); // Load pdf
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         actionBarBinding.bookmark.setOnClickListener(v -> {
-            currentBookInDB = (com.example.bookshelf.repository.objects.Book)
-                    Repository.selectObject(currentBook.id, new BookConverter());
-            assert currentBookInDB != null;
-            currentBookInDB.setBookmark(currentPage);
-            Repository.updateObject(currentBookInDB, new BookConverter());
+            currentBook.setBookmark(currentPage);
+            Repository.updateObject(currentBook, new BookConverter());
             actionBarBinding.bookmark.setImageResource(R.drawable.ic_bookmark_activated);
         });
 
         actionBarBinding.quotes.setOnClickListener(v -> {
-            QuotesFragment fragment = QuotesFragment.newInstance(Repository.currentBookId);
+            QuotesFragment fragment = QuotesFragment.newInstance(currentBook.getId());
             getParentFragmentManager().beginTransaction()
                     .replace(R.id.fragmentContainerView, fragment, null)
                     .setReorderingAllowed(true)
@@ -137,7 +153,7 @@ public class ViewerFragment extends Fragment {
                     if (text.isEmpty())
                         return true;
 
-                    Quote quote = new Quote(0, Repository.currentBookId, text);
+                    Quote quote = new Quote(0, currentBook.getId(), text);
                     Repository.insertNewObject(quote, new QuoteConverter());
 
                     return true;
@@ -163,14 +179,6 @@ public class ViewerFragment extends Fragment {
         return result;
     }
 
-    private void loadPDF() throws IOException {
-        currentBookInDB = (com.example.bookshelf.repository.objects.Book)
-                        Repository.selectObject(currentBook.id, new BookConverter());
-        assert currentBookInDB != null;
-
-        changePagePDF(currentPage);
-    }
-
     private void setBackButtonHandler() {
         OnBackPressedCallback callback = new OnBackPressedCallback(true) {
             @Override
@@ -180,11 +188,13 @@ public class ViewerFragment extends Fragment {
                 );
             }
         };
-        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), callback);
+        requireActivity().getOnBackPressedDispatcher().addCallback(
+                getViewLifecycleOwner(), callback
+        );
     }
 
     private void changePagePDF(int nextPage) throws IOException {
-        File pdfFile = new File(currentBookInDB.getPdf());
+        File pdfFile = new File(currentBook.getPdf());
         Uri uri = Uri.fromFile(pdfFile);
         Activity activity = getActivity();
         assert activity != null;

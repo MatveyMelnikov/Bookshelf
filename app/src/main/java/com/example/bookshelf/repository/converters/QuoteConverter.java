@@ -25,11 +25,8 @@ public class QuoteConverter implements RepositoryConverter {
         Cursor cursor = database.rawQuery(getSelectRequestString(id), null);
 
         Quote quote = null;
-        if (cursor.moveToFirst()) {
-            int bookId = cursor.getInt(1);
-            String content = cursor.getString(2);
-            quote = new Quote(id, bookId, content);
-        }
+        if (cursor.moveToFirst())
+            quote = fillObject(cursor);
 
         cursor.close();
         return quote;
@@ -47,12 +44,8 @@ public class QuoteConverter implements RepositoryConverter {
         );
 
         Quote quote = null;
-        if (cursor.moveToFirst()) {
-            int id = cursor.getInt(0);
-            int bookId = cursor.getInt(1);
-            String content = cursor.getString(2);
-            quote = new Quote(id, bookId, content);
-        }
+        if (cursor.moveToFirst())
+            quote = fillObject(cursor);
 
         cursor.close();
         return quote;
@@ -123,6 +116,13 @@ public class QuoteConverter implements RepositoryConverter {
                 object.getContent(),
                 object.getId()
         ).toString();
+    }
+
+    private Quote fillObject(Cursor cursor) {
+        int id = cursor.getInt(0);
+        int bookId = cursor.getInt(1);
+        String content = cursor.getString(2);
+        return new Quote(id, bookId, content);
     }
 
     private String getDeleteRequestString(int id) {

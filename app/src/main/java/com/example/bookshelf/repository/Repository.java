@@ -7,8 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import androidx.annotation.Nullable;
 
 import com.example.bookshelf.EntryController;
-import com.example.bookshelf.model.Book;
 import com.example.bookshelf.repository.converters.RepositoryConverter;
+import com.example.bookshelf.repository.objects.Book;
 import com.example.bookshelf.repository.objects.Quote;
 import com.example.bookshelf.repository.objects.RepositoryObject;
 import com.example.bookshelf.repository.objects.User;
@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Formatter;
 
 public class Repository {
-    public static int currentBookId = 0;
+    //public static int currentBookId = 0;
     static SQLiteDatabase database;
     static WeakReference<Context> contextRef;
     static final String createUsersTableQuery =
@@ -123,7 +123,6 @@ public class Repository {
 
     public static ArrayList<Book> getArrayOfBookModels(int userId) {
         Formatter formatter = new Formatter();
-        String req = formatter.format(getAllBooksForUser, userId).toString();
         Cursor cursor = database.rawQuery(
                 formatter.format(getAllBooksForUser, userId).toString(),
                 null
@@ -131,9 +130,18 @@ public class Repository {
 
         ArrayList<Book> result = new ArrayList<>();
         while (cursor.moveToNext()) {
-            result.add(
-                    new Book(cursor.getInt(0), cursor.getString(2), cursor.getString(3))
-            );
+            int id = cursor.getInt(0);
+            String name = cursor.getString(2);
+            String author = cursor.getString(3);
+            String pdf = cursor.getString(4);
+            int bookmark = cursor.getInt(5);
+            String cover = cursor.getString(6);
+
+            Book book = new Book(id, userId, name, author, pdf);
+            book.setBookmark(bookmark);
+            book.setCover(cover);
+
+            result.add(book);
         }
 
         cursor.close();

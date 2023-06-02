@@ -46,9 +46,9 @@ public class QuoteAdapter extends RecyclerView.Adapter<QuoteAdapter.CustomViewHo
     public void onBindViewHolder(@NonNull QuoteAdapter.CustomViewHolder holder, int position) {
         holder.setContent(quotes.get(position).getContent());
 
-        holder.layout.setOnClickListener(view -> {
-            recyclerListener.onElementClick(holder.getAdapterPosition());
-        });
+        holder.layout.setOnClickListener(view -> recyclerListener.onElementClick(
+                holder.getAdapterPosition()
+        ));
 
         holder.layout.setOnLongClickListener(view -> {
             recyclerListener.onLongElementClick(holder.getAdapterPosition());

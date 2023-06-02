@@ -20,4 +20,7 @@
     <string name="file_selected">file selected</string>
     <string name="page_indicator">Page: %1$d / %2$d</string>
     <string name="book_indicator">%1$s - %2$s</string>
+    <string name="quotes">Quotes</string>
+    <string name="action_family">Family</string>
+    <string name="action_logout">Logout</string>
 </resources>

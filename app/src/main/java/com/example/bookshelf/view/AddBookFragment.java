@@ -38,10 +38,12 @@ import android.view.ViewGroup;
 
 import com.example.bookshelf.R;
 import com.example.bookshelf.databinding.FragmentAddBookBinding;
-import com.example.bookshelf.model.Book;
-import com.example.bookshelf.repository.ChildBookListFragment;
 import com.example.bookshelf.repository.Repository;
 import com.example.bookshelf.repository.converters.BookConverter;
+import com.example.bookshelf.repository.converters.QuoteConverter;
+import com.example.bookshelf.repository.objects.Book;
+import com.example.bookshelf.repository.objects.Quote;
+import com.example.bookshelf.repository.objects.RepositoryObject;
 import com.example.bookshelf.repository.objects.User;
 
 import java.io.ByteArrayInputStream;
@@ -51,6 +53,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 
 public class AddBookFragment extends Fragment implements MenuProvider {
     private FragmentAddBookBinding binding;
@@ -66,11 +69,11 @@ public class AddBookFragment extends Fragment implements MenuProvider {
 
     public AddBookFragment() {}
 
-    public static AddBookFragment newInstance(User user, Book book) {
+    public static AddBookFragment newInstance(User user, Integer bookId) {
         AddBookFragment fragment = new AddBookFragment();
         Bundle args = new Bundle();
         args.putSerializable(USER_PARAM, user);
-        args.putSerializable(EDIT_BOOK_PARAM, book);
+        args.putInt(EDIT_BOOK_PARAM, bookId);
         fragment.setArguments(args);
         return fragment;
     }
@@ -80,7 +83,10 @@ public class AddBookFragment extends Fragment implements MenuProvider {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             user = (User) getArguments().getSerializable(USER_PARAM);
-            editableBook = (Book) getArguments().getSerializable(EDIT_BOOK_PARAM);
+            int editableBookId = getArguments().getInt(EDIT_BOOK_PARAM, 0);
+            if (editableBookId != 0) {
+                editableBook = (Book) Repository.selectObject(editableBookId, new BookConverter());
+            }
         }
     }
 
@@ -98,20 +104,14 @@ public class AddBookFragment extends Fragment implements MenuProvider {
         setActionBar();
 
         if (editableBook != null) {
-            binding.editBookName.setText(editableBook.name);
-            binding.editAuthor.setText(editableBook.author);
+            binding.editBookName.setText(editableBook.getName());
+            binding.editAuthor.setText(editableBook.getAuthor());
 
-            com.example.bookshelf.repository.objects.Book bookDB =
-                    (com.example.bookshelf.repository.objects.Book) Repository.selectObject(
-                            editableBook.id, new BookConverter()
-                    );
-            assert bookDB != null;
-            //selectedPdf = Uri.parse(bookDB.getPdf());
-            File pdfFile = new File(bookDB.getPdf());
+            File pdfFile = new File(editableBook.getPdf());
             selectedPdf = Uri.fromFile(pdfFile);
             binding.choosePdf.setText(R.string.file_selected);
 
-            currentBookCard = bookDB.getCover();
+            currentBookCard = editableBook.getCover();
             if (currentBookCard != null) {
                 binding.bookCard.setBackground(
                         new BitmapDrawable(requireContext().getResources(), currentBookCard)
@@ -156,20 +156,21 @@ public class AddBookFragment extends Fragment implements MenuProvider {
             if (bookName.isEmpty() || author.isEmpty() || selectedPdf == null)
                 return;
 
+            //deleteExistFile();
+
             File pdfFile = savePDFToLocalStorage(
                     bookName + "_" + author + "_" +
                             user.getName(),
                     selectedPdf
             );
 
-            com.example.bookshelf.repository.objects.Book bookDB =
-                    new com.example.bookshelf.repository.objects.Book(
-                            editableBook == null ? 0 : editableBook.id,
-                            user.getId(),
-                            bookName,
-                            author,
-                            pdfFile.getAbsolutePath()
-                    );
+            Book bookDB = new Book(
+                    editableBook == null ? 0 : editableBook.getId(),
+                    user.getId(),
+                    bookName,
+                    author,
+                    pdfFile.getAbsolutePath()
+            );
             if (currentBookCard != null)
                 bookDB.setCover(currentBookCard);
 
@@ -191,6 +192,25 @@ public class AddBookFragment extends Fragment implements MenuProvider {
     }
 
     private File savePDFToLocalStorage(String newFileName, Uri uri) {
+        // Removing a file on replacement
+        if (editableBook != null) {
+            File pdfFile = new File(editableBook.getPdf());
+            Uri previousPdf = Uri.fromFile(pdfFile);
+
+            if (Objects.equals(previousPdf.getPath(), selectedPdf.getPath()))
+                return pdfFile;
+
+            pdfFile.delete();
+
+            QuoteConverter converter = new QuoteConverter();
+            RepositoryObject quote = Repository.selectObject(
+                    new Quote(0, editableBook.getId(), null), converter
+            );
+            if (quote != null) {
+                Repository.deleteObject(quote.getId(), converter);
+            }
+        }
+
         // Save pdf to local storage
         try {
             File myFile = new File(requireActivity().getFilesDir(), newFileName);
@@ -265,7 +285,6 @@ public class AddBookFragment extends Fragment implements MenuProvider {
 
     Bitmap cropImage(Bitmap bitmap) {
         Bitmap result;
-        // Bitmap.createBitmap(source, x, y, width, height)
         if (bitmap.getHeight() < bitmap.getWidth()) {
             int newWidth = (int) (bitmap.getHeight() * 0.75F);
             result = Bitmap.createBitmap(

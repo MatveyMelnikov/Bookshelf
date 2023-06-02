@@ -24,7 +24,6 @@ import android.view.ViewGroup;
 import com.example.bookshelf.EntryController;
 import com.example.bookshelf.R;
 import com.example.bookshelf.databinding.FragmentFamilyBinding;
-import com.example.bookshelf.repository.ChildBookListFragment;
 import com.example.bookshelf.repository.Repository;
 import com.example.bookshelf.repository.converters.FamilyConverter;
 import com.example.bookshelf.repository.converters.UserConverter;
@@ -47,6 +46,12 @@ public class FamilyFragment extends Fragment implements RecyclerListener, MenuPr
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 
     @Override
