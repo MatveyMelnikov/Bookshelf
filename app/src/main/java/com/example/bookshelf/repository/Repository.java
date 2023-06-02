@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Formatter;
 
 public class Repository {
-    //public static int currentBookId = 0;
     static SQLiteDatabase database;
     static WeakReference<Context> contextRef;
     static final String createUsersTableQuery =
